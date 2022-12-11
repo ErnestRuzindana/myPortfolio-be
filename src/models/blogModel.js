@@ -35,16 +35,8 @@ const blogSchema = new Schema({
         type: String
     },
 
-    likes:[{
-        likingUser: {
-            type: String
-        }  
-    }],
-
-    unlikes:[{
-        unlikingUser: {
-            type: String
-        }  
+    blog_likes:[{
+        type: Schema.Types.ObjectId, ref: "BlogLike" 
     }],
 
     comments:[{
@@ -80,7 +72,12 @@ const blogSchema = new Schema({
             replierImage: {
                 type: String
             }
-        }]
+        }],
+        
+        comment_likes:[{
+            type: Schema.Types.ObjectId, ref: "CommentLike" 
+        }],
+
     }],
 
     

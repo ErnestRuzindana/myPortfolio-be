@@ -35,10 +35,11 @@ router.put("/updatePost/:id", upload, blogController.updatePost);
 router.delete("/deletePost/:id", blogController.deletePost);
 router.put("/createComment/:id", blogController.createComment);
 router.get("/getAllComments/:id", blogController.getAllComments);
-router.put("/likePost/:id", blogController.likePost);
+router.get("/getAllCommentReplies/:id", blogController.getAllCommentReplies);
+router.post("/likePost/:blog_id", blogController.likePost);
 router.get("/getAllLikes/:id", blogController.getAllLikes);
-router.put("/unlikePost/:id", blogController.unlikePost);
-router.get("/getAllUnlikes/:id", blogController.getAllUnlikes);
+router.post("/likeComment/:blog_id", blogController.likeComment);
+router.get("/getAllCommentLikes/:id", blogController.getAllCommentLikes);
 router.put("/commentReply/:id/:commentId", blogController.commentReply);
 router.get("/getSingleComment/:id/:commentId", blogController.getSingleComment);
 

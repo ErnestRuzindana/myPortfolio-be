@@ -1,6 +1,10 @@
+import mongoose from "mongoose";
 import blogSchema from "../models/blogModel.js";
+import blogLikeModel from "../models/blogLikeModel.js";
+import commentLikeModel from "../models/commentLikeModel.js";
 import blogValidationSchema from "../validations/blogValidation.js";
-
+import Jwt from "jsonwebtoken"
+import blogModel from "../models/blogModel.js";
 
 
 // Creating the post
@@ -259,23 +263,78 @@ const getSingleComment = async(request, response) =>{
 // Like post
 const likePost = async(request, response) =>{
     try{
+      let blog_id = request.params.blog_id
+      if(!mongoose.Types.ObjectId.isValid(blog_id)){
+        return response.status(400).json({ 
+            "messageInvalidId": "Invalid blog Id",
+            data: {}
+        })
+      }
 
-        const like = {
-            likingUser : request.body.likingUser,
+      const blog = await blogSchema.findOne({_id: blog_id});
+
+      if(!blog){
+        return response.status(400).json({ 
+            "messageNoBlog": "No blog found!",
+            data: {}
+        })
+      }
+      else{
+        let current_user_id
+        const token = request.header("auth_token")
+      
+       if(!token)
+        return response.status(401).json({
+            "messageLogin": "Please login!"
+        })
+
+        Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodedToken)=>{
+            if(err){
+                console.log(err.message)
+            }
+
+            else{
+                current_user_id = decodedToken.userEmail._id
+            }
+        })
+        
+        const blog_like = await blogLikeModel.findOne({ blog_id: blog_id, user_id: current_user_id})
+
+        if(!blog_like){
+            const blogLikeDoc = new blogLikeModel ({
+                blog_id: blog_id,
+                user_id: current_user_id
+            })
+            await blogLikeDoc.save();
+
+            await blogSchema.updateOne({_id: blog_id},
+                {
+                  $push:{blog_likes: current_user_id}
+                })
+
+                return response.status(200).json({ 
+                    "messageLikeAdded": "Like successfully added!",
+                    data: {}
+                })
         }
 
-        const postLikes = await blogSchema.findByIdAndUpdate({_id: request.params.id},{
-            $push:{likes:like}
-        },{
-            new:true
-        })
+        else{
+            await blogLikeModel.deleteOne({
+                _id:blog_like._id
+            })
 
-        await postLikes.save()
+            await blogSchema.updateOne({_id: blog_like.blog_id},
+                {
+                  $pull:{blog_likes: current_user_id}
+                })
 
-        response.status(200).json({
-            "successMessage": "Like added successfully!",
-            "likeContent": postLikes.likes
-        })
+                return response.status(200).json({ 
+                    "messageLikeRemoved": "Like successfully removed!",
+                    data: {}
+                })
+        }
+      }
+ 
     }
 
     catch(error){
@@ -291,7 +350,7 @@ const likePost = async(request, response) =>{
 const getAllLikes = async(request, response) =>{
     try{
         const post = await blogSchema.findOne({_id: request.params.id});
-        const likes = post.likes
+        const likes = post.blog_likes
         
         if (likes){
             response.status(200).json({"fetchedLikes": likes})
@@ -313,26 +372,81 @@ const getAllLikes = async(request, response) =>{
     }
 }
 
-// Like post
-const unlikePost = async(request, response) =>{
+// Like a comment
+const likeComment = async(request, response) =>{
     try{
+      let blog_id = request.params.blog_id
+      if(!mongoose.Types.ObjectId.isValid(blog_id)){
+        return response.status(400).json({ 
+            "messageInvalidId": "Invalid blog Id",
+            data: {}
+        })
+      }
 
-        const like = {
-            likingUser : request.body.likingUser,
+      const blog = await blogSchema.findOne({_id: blog_id});
+
+      if(!blog){
+        return response.status(400).json({ 
+            "messageNoBlog": "No blog found!",
+            data: {}
+        })
+      }
+      else{
+        let current_user_id
+        const token = request.header("auth_token")
+      
+       if(!token)
+        return response.status(401).json({
+            "messageLogin": "Please login!"
+        })
+
+        Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodedToken)=>{
+            if(err){
+                console.log(err.message)
+            }
+
+            else{
+                current_user_id = decodedToken.userEmail._id
+            }
+        })
+        
+        const comment_like = await commentLikeModel.findOne({ blog_id: blog_id, user_id: current_user_id})
+
+        if(!comment_like){
+            const commentLikeDoc = new commentLikeModel ({
+                blog_id: blog_id,
+                user_id: current_user_id
+            })
+            await commentLikeDoc.save();
+
+            await blogSchema.updateOne({_id: blog_id},
+                {
+                  $push:{comment_likes: current_user_id}
+                })
+
+                return response.status(200).json({ 
+                    "messageLikeAdded": "Like successfully added!",
+                    data: {}
+                })
         }
 
-        const postLikes = await blogSchema.findByIdAndUpdate({_id: request.params.id},{
-            $pull:{likes:like}
-        },{
-            new:true
-        })
+        else{
+            await commentLikeModel.deleteOne({
+                _id:comment_like._id
+            })
 
-        await postLikes.save()
+            await blogSchema.updateOne({_id: comment_like.blog_id},
+                {
+                  $pull:{comment_likes: current_user_id}
+                })
 
-        response.status(200).json({
-            "successMessage": "Like added successfully!",
-            "likeContent": postLikes.likes
-        })
+                return response.status(200).json({ 
+                    "messageLikeRemoved": "Like successfully removed!",
+                    data: {}
+                })
+        }
+      }
+ 
     }
 
     catch(error){
@@ -344,14 +458,14 @@ const unlikePost = async(request, response) =>{
     }
 }
 
-// Get all Likes
-const getAllUnlikes = async(request, response) =>{
+// Get all comment Likes
+const getAllCommentLikes = async(request, response) =>{
     try{
         const post = await blogSchema.findOne({_id: request.params.id});
-        const unlikes = post.unlikes
+        const likes = post.comment_likes
         
-        if (unlikes){
-            response.status(200).json({"fetchedUnlikes": unlikes})
+        if (likes){
+            response.status(200).json({"fetchedLikes": likes})
         }
 
         else{
@@ -417,6 +531,37 @@ const commentReply = async(request, response) =>{
     }
 }
 
+const getAllCommentReplies = async(request, response) =>{
+    try{
+        var pipeline = [
+            {
+              $lookup: {
+                from: "commentReplies",
+                localField: "comments.commentReplies",
+                foreignField: "_id",
+                as: "comments.commentReplies" 
+              }
+            }
+          ];
+          
+          blogModel.aggregate(pipeline, function(err, results) {
+            if (err) throw err;
+            response.status(200).json({"fetchedReplies": results})
+          });
+        
+         
+        
+    }
+
+    catch(error){
+        console.log(error);
+        response.status(500).json({
+            "status": "fail", 
+            "message": error.message
+        })
+    }
+}
+
 export default {createPost, getPosts, getSinglePost, updatePost, deletePost, 
-    createComment, getAllComments, likePost, getAllLikes, unlikePost, getAllUnlikes,
-    commentReply, getSingleComment};
+    createComment, getAllComments, likePost, getAllLikes, likeComment, getAllCommentLikes,
+    commentReply, getSingleComment, getAllCommentReplies};
