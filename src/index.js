@@ -28,14 +28,14 @@ const corsOptions = {
     origin: '*',
     optionsSuccessStatus: 200 
   }
+  app.use(cors({
+    origin: 'https://myportfolio-fe.netlify.app',
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+  }));
 
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
-// app.use(cors({
-//     origin: 'https://myportfolio-fe.netlify.app',
-//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-//   }));
 
 app.use(express.urlencoded({ extended: true }));
 
