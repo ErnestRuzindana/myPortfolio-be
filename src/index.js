@@ -25,7 +25,7 @@ import subscriptionRoute from "./routes/subscriptionRoute.js";
 const ourMemoryStore = MemoryStore(expressSession);
 
 const corsOptions = {
-    origin: ['Access-Control-Allow-Origin', 'https://myportfolio-fe.netlify.app/'],
+    origin: '*',
     optionsSuccessStatus: 200 
   }
 
@@ -51,15 +51,15 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-app.use("/contact", cors(corsOptions), contactRoute);
-app.use("/register", cors(corsOptions), registerRoute);
-app.use("/login", cors(corsOptions), loginRoute);
-app.use("/", cors(corsOptions), googleRoute);
-app.use("/", cors(corsOptions), facebookRoute);
-app.use("/", cors(corsOptions), githubRoute);
-app.use("/", cors(corsOptions), socialMediaLoggedInUser);
-app.use("/", cors(corsOptions), blogRoute);
-app.use("/", cors(corsOptions), subscriptionRoute);
+app.use("/contact", contactRoute);
+app.use("/register", registerRoute);
+app.use("/login", loginRoute);
+app.use("/", googleRoute);
+app.use("/", facebookRoute);
+app.use("/", githubRoute);
+app.use("/", socialMediaLoggedInUser);
+app.use("/", blogRoute);
+app.use("/", subscriptionRoute);
 
 app.use('/images',express.static('src/images'));
 app.use('/postImages',express.static('src/postImages'));
