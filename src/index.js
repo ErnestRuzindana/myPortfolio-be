@@ -25,7 +25,7 @@ import subscriptionRoute from "./routes/subscriptionRoute.js";
 const ourMemoryStore = MemoryStore(expressSession);
 
 const corsOptions = {
-    origin: '*',
+    origin: ['Access-Control-Allow-Origin', 'https://myportfolio-fe.netlify.app/'],
     optionsSuccessStatus: 200 
   }
 
