@@ -61,7 +61,7 @@ app.use("/", googleRoute);
 app.use("/", facebookRoute);
 app.use("/", githubRoute);
 app.use("/", socialMediaLoggedInUser);
-// app.use("/", blogRoute);
+app.use("/", blogRoute);
 app.use("/", subscriptionRoute);
 
 app.use('/images',express.static('src/images'));
