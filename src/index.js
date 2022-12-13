@@ -30,6 +30,8 @@ const corsOptions = {
     optionsSuccessStatus: 200 
   }
 
+app.options('*', cors())
+
 app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', "POST, GET, OPTIONS, DELETE, PUT");
