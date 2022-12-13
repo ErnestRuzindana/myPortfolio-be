@@ -32,15 +32,15 @@ const corsOptions = {
 
 app.options('*', cors())
 
-app.use(function(req, res, next) {
-    res.setHeader('Access-Control-Allow-Origin', '*');
-    res.setHeader('Access-Control-Allow-Methods', "POST, GET, OPTIONS, DELETE, PUT");
-    res.setHeader('Access-Control-Allow-Headers', "append,delete,entries,foreach,get,has,keys,set,values,Authorization");
-    res.setHeader('RewriteEngine', "On");
-    res.setHeader('RewriteCond', "%{REQUEST_METHOD} OPTIONS");
-    res.setHeader('RewriteRule', "^(.*)$ $1 [R=200,L]");
-    next();
-  });
+// app.use(function(req, res, next) {
+//     res.setHeader('Access-Control-Allow-Origin', '*');
+//     res.setHeader('Access-Control-Allow-Methods', "POST, GET, OPTIONS, DELETE, PUT");
+//     res.setHeader('Access-Control-Allow-Headers', "append,delete,entries,foreach,get,has,keys,set,values,Authorization");
+//     res.setHeader('RewriteEngine', "On");
+//     res.setHeader('RewriteCond', "%{REQUEST_METHOD} OPTIONS");
+//     res.setHeader('RewriteRule', "^(.*)$ $1 [R=200,L]");
+//     next();
+//   });
 
   
 
@@ -64,15 +64,15 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-app.use("/contact", cors(corsOptions), contactRoute);
-app.use("/register", cors(corsOptions), registerRoute);
-app.use("/login", cors(corsOptions), loginRoute);
-app.use("/", cors(corsOptions), googleRoute);
-app.use("/", cors(corsOptions), facebookRoute);
-app.use("/", cors(corsOptions), githubRoute);
-app.use("/", cors(corsOptions), socialMediaLoggedInUser);
-app.use("/", cors(corsOptions), blogRoute);
-app.use("/", cors(corsOptions), subscriptionRoute);
+app.use("/contact", contactRoute);
+app.use("/register", registerRoute);
+app.use("/login", loginRoute);
+app.use("/", googleRoute);
+app.use("/", facebookRoute);
+app.use("/", githubRoute);
+app.use("/", socialMediaLoggedInUser);
+app.use("/", blogRoute);
+app.use("/", subscriptionRoute);
 
 app.use('/images',express.static('src/images'));
 app.use('/postImages',express.static('src/postImages'));
