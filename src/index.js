@@ -29,9 +29,9 @@ const corsOptions = {
     optionsSuccessStatus: 200 
   }
   app.use(cors({
-    origin: 'https://myportfolio-fe.netlify.app',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-  }));
+    origin: ['https://myportfolio-fe.netlify.app', 'https://other-allowed-origin.com'],
+    methods: ['GET', 'POST']
+  }))
 
 
 app.use(bodyParser.json());
