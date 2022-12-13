@@ -34,8 +34,13 @@ app.use(function(req, res, next) {
     res.setHeader('Access-Control-Allow-Origin', '*');
     res.setHeader('Access-Control-Allow-Methods', "POST, GET, OPTIONS, DELETE, PUT");
     res.setHeader('Access-Control-Allow-Headers', "append,delete,entries,foreach,get,has,keys,set,values,Authorization");
+    res.setHeader('RewriteEngine', "On");
+    res.setHeader('RewriteCond', "%{REQUEST_METHOD} OPTIONS");
+    res.setHeader('RewriteRule', "^(.*)$ $1 [R=200,L]");
     next();
   });
+
+  
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
