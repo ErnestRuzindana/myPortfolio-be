@@ -24,13 +24,24 @@ import subscriptionRoute from "./routes/subscriptionRoute.js";
 
 const ourMemoryStore = MemoryStore(expressSession);
 
-const corsOptions = {
-    origin: '*',
-    credentials:true,
-    optionsSuccessStatus: 200 
-  }
+// const corsOptions = {
+//     origin: '*',
+//     credentials:true,
+//     optionsSuccessStatus: 200 
+//   }
 
-app.options('*', cors())
+// app.options('*', cors())
+
+var whitelist = ['https://myportfolio-fe.netlify.app/']
+var corsOptionsDelegate = function (req, callback) {
+  var corsOptions;
+  if (whitelist.indexOf(req.header('Origin')) !== -1) {
+    corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
+  } else {
+    corsOptions = { origin: false } // disable CORS for this request
+  }
+  callback(null, corsOptions) // callback expects two parameters: error and options
+}
 
 // app.use(function(req, res, next) {
 //     res.setHeader('Access-Control-Allow-Origin', '*');
@@ -64,15 +75,15 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-app.use("/contact", contactRoute);
-app.use("/register", registerRoute);
-app.use("/login", loginRoute);
-app.use("/", googleRoute);
-app.use("/", facebookRoute);
-app.use("/", githubRoute);
-app.use("/", socialMediaLoggedInUser);
-app.use("/", blogRoute);
-app.use("/", subscriptionRoute);
+app.use("/contact", cors(corsOptionsDelegate), contactRoute);
+app.use("/register", cors(corsOptionsDelegate), registerRoute);
+app.use("/login", cors(corsOptionsDelegate), loginRoute);
+app.use("/", cors(corsOptionsDelegate), googleRoute);
+app.use("/", cors(corsOptionsDelegate), facebookRoute);
+app.use("/", cors(corsOptionsDelegate), githubRoute);
+app.use("/", cors(corsOptionsDelegate), socialMediaLoggedInUser);
+app.use("/", cors(corsOptionsDelegate), blogRoute);
+app.use("/", cors(corsOptionsDelegate), subscriptionRoute);
 
 app.use('/images',express.static('src/images'));
 app.use('/postImages',express.static('src/postImages'));
