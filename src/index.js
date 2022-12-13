@@ -33,7 +33,12 @@ const corsOptions = {
 //     origin: 'https://myportfolio-fe.netlify.app',
 //     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
 //   }));
-
+// Access-Control-Allow-Origin: *,
+// Access-Control-Allow-Methods: GET, POST, PUT, DELETE,
+// Access-Control-Allow-Headers: Content-Type, Authorization
+app.setHeader('Access-Control-Allow-Origin', '*');
+// app.setHeader('Access-Control-Allow-Origin', '*');
+// app.setHeader('Access-Control-Allow-Origin', '*');
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
