@@ -26,12 +26,13 @@ const ourMemoryStore = MemoryStore(expressSession);
 
 const corsOptions = {
     origin: '*',
+    credentials:true,
     optionsSuccessStatus: 200 
   }
-  app.use(cors({
-    origin: 'https://myportfolio-fe.netlify.app',
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-  }));
+//   app.use(cors({
+//     origin: 'https://myportfolio-fe.netlify.app',
+//     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
+//   }));
 
 
 app.use(bodyParser.json());
