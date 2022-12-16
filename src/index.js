@@ -5,6 +5,7 @@ const app = express();
 
 import cors from "cors";
 import mongoose from "mongoose";
+import dotenv from "dotenv"
 import contactRoute from "./routes/contactRoute.js";
 import registerRoute from "./routes/registerRoute.js";
 import googleRoute from "./routes/googleRoute.js";
@@ -30,7 +31,7 @@ const corsOptions = {
     optionsSuccessStatus: 200 
   }
 
-
+dotenv.config()
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
@@ -49,6 +50,7 @@ app.use(expressSession({
 
 app.use(passport.initialize());
 app.use(passport.session());
+
 
 
 app.use("/contact", cors(corsOptions), contactRoute);
