@@ -24,36 +24,12 @@ import subscriptionRoute from "./routes/subscriptionRoute.js";
 
 const ourMemoryStore = MemoryStore(expressSession);
 
-// const corsOptions = {
-//     origin: '*',
-//     credentials:true,
-//     optionsSuccessStatus: 200 
-//   }
-
-// app.options('*', cors())
-
-var whitelist = ['https://myportfolio-fe.netlify.app/']
-var corsOptionsDelegate = function (req, callback) {
-  var corsOptions;
-  if (whitelist.indexOf(req.header('Origin')) !== -1) {
-    corsOptions = { origin: true } // reflect (enable) the requested origin in the CORS response
-  } else {
-    corsOptions = { origin: false } // disable CORS for this request
+const corsOptions = {
+    origin: '*',
+    credentials:true,
+    optionsSuccessStatus: 200 
   }
-  callback(null, corsOptions) // callback expects two parameters: error and options
-}
 
-// app.use(function(req, res, next) {
-//     res.setHeader('Access-Control-Allow-Origin', '*');
-//     res.setHeader('Access-Control-Allow-Methods', "POST, GET, OPTIONS, DELETE, PUT");
-//     res.setHeader('Access-Control-Allow-Headers', "append,delete,entries,foreach,get,has,keys,set,values,Authorization");
-//     res.setHeader('RewriteEngine', "On");
-//     res.setHeader('RewriteCond', "%{REQUEST_METHOD} OPTIONS");
-//     res.setHeader('RewriteRule', "^(.*)$ $1 [R=200,L]");
-//     next();
-//   });
-
-  
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
@@ -75,15 +51,15 @@ app.use(passport.initialize());
 app.use(passport.session());
 
 
-app.use("/contact", cors(corsOptionsDelegate), contactRoute);
-app.use("/register", cors(corsOptionsDelegate), registerRoute);
-app.use("/login", cors(corsOptionsDelegate), loginRoute);
-app.use("/", cors(corsOptionsDelegate), googleRoute);
-app.use("/", cors(corsOptionsDelegate), facebookRoute);
-app.use("/", cors(corsOptionsDelegate), githubRoute);
-app.use("/", cors(corsOptionsDelegate), socialMediaLoggedInUser);
-app.use("/", cors(corsOptionsDelegate), blogRoute);
-app.use("/", cors(corsOptionsDelegate), subscriptionRoute);
+app.use("/contact", cors(corsOptions), contactRoute);
+app.use("/register", cors(corsOptions), registerRoute);
+app.use("/login", cors(corsOptions), loginRoute);
+app.use("/", cors(corsOptions), googleRoute);
+app.use("/", cors(corsOptions), facebookRoute);
+app.use("/", cors(corsOptions), githubRoute);
+app.use("/", cors(corsOptions), socialMediaLoggedInUser);
+app.use("/", cors(corsOptions), blogRoute);
+app.use("/", cors(corsOptions), subscriptionRoute);
 
 app.use('/images',express.static('src/images'));
 app.use('/postImages',express.static('src/postImages'));
