@@ -77,7 +77,7 @@ mongoose.connection.once("open", ()=>{
 })
 
 
-const port = process.env.PORT_NUMBER || 5000;
+const port = process.env.PORT_NUMBER || 5300;
 app.listen(port, ()=>{
     console.log(`The server is running on ${port}`);
 })
