@@ -5,8 +5,8 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
-    "start": "node src/index",
-    "dev": "nodemon --require dotenv/config src/index.js"
+    "dev": "nodemon --require dotenv/config src/index.js",
+    "start": "node src/index.js"
   },
   "repository": {
     "type": "git",
