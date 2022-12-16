@@ -56,9 +56,9 @@ app.use(passport.session());
 app.use("/contact", cors(corsOptions), contactRoute);
 app.use("/register", cors(corsOptions), registerRoute);
 app.use("/login", cors(corsOptions), loginRoute);
-// app.use("/", cors(corsOptions), googleRoute);
-// app.use("/", cors(corsOptions), facebookRoute);
-// app.use("/", cors(corsOptions), githubRoute);
+app.use("/", cors(corsOptions), googleRoute);
+app.use("/", cors(corsOptions), facebookRoute);
+app.use("/", cors(corsOptions), githubRoute);
 app.use("/", cors(corsOptions), socialMediaLoggedInUser);
 app.use("/", cors(corsOptions), blogRoute);
 app.use("/", cors(corsOptions), subscriptionRoute);
@@ -77,10 +77,10 @@ mongoose.connection.once("open", ()=>{
 })
 
 
-
+const hostname = '0.0.0.0'
 const port = process.env.PORT_NUMBER;
-app.listen(port, ()=>{
-    console.log(`The server is running on ${port}`);
+app.listen(port, hostname, ()=>{
+    console.log(`The server is running at http://${hostname}:${port}`);
 })
 
 
