@@ -22,7 +22,7 @@ import subscriptionRoute from "./routes/subscriptionRoute.js";
 
 
 
-
+dotenv.config()
 const ourMemoryStore = MemoryStore(expressSession);
 
 const corsOptions = {
@@ -31,7 +31,7 @@ const corsOptions = {
     optionsSuccessStatus: 200 
   }
 
-dotenv.config()
+ 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
