@@ -9,7 +9,7 @@ const facebookCredentials = (passport)=>{
     passport.use(new facebookStrategy({
         clientID: process.env.FACEBOOK_CLIENT_ID,
         clientSecret: process.env.FACEBOOK_CLIENT_SECRET,
-        callbackURL: "http://localhost:5000/facebook/callback",
+        callbackURL: "https://ernestruzindana-be.cyclic.app/facebook/callback",
         profileFields: ["id", "displayName", "email", "name", "picture"]
     }, 
     

@@ -9,7 +9,7 @@ const githubCredentials = (passport)=>{
     passport.use(new githubStrategy({
         clientID: process.env.GITHUB_CLIENT_ID,
         clientSecret: process.env.GITHUB_CLIENT_SECRET,
-        callbackURL: "http://localhost:5000/github/callback"
+        callbackURL: "https://ernestruzindana-be.cyclic.app/github/callback"
     }, 
     
     (accessToken, refreshToken, profile, done)=>{

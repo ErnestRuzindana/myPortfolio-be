@@ -18,8 +18,8 @@ const createPost = async(request, response) =>{
 
         const newPost = new blogSchema();
 
-        const postImageLink = `${request.protocol}://${request.get("host")}/postImages/${request.files.postImage[0].filename}`
-        const headerImageLink = `${request.protocol}://${request.get("host")}/postImages/${request.files.headerImage[0].filename}`
+        const postImageLink = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.postImage[0].filename}`
+        const headerImageLink = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.headerImage[0].filename}`
 
         newPost.title = request.body.title,
         newPost.postBody = request.body.postBody,
@@ -112,8 +112,8 @@ const updatePost = async(request, response) =>{
             }
 
             else{
-                post.postImage = `${request.protocol}://${request.get("host")}/postImages/${request.files.postImage[0].filename}` || post.postImage
-                post.headerImage = `${request.protocol}://${request.get("host")}/postImages/${request.files.headerImage[0].filename}` || post.headerImage
+                post.postImage = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.postImage[0].filename}` || post.postImage
+                post.headerImage = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.headerImage[0].filename}` || post.headerImage
             }
 
             await post.save()
