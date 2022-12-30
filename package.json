@@ -7,7 +7,7 @@
   "type": "module",
   "scripts": {
     "start": "node --require dotenv/config src/index.js",
-    "predeploy": "npm run build",
+    "predeploy": "npm run start",
     "deploy": "gh-pages -d build"
   },
   "repository": {
