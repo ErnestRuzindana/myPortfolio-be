@@ -1,23 +1,4 @@
 {
-  "name": "myportfolio-be",
-  "version": "1.0.0",
-  "description": "I am going to build the backend for my myPortfolio",
-  "main": "index.js",
-  "type": "module",
-  "scripts": {
-    "start": "node --require dotenv/config src/index.js"
-  },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/ErnestRuzindana/myPortfolio-be.git"
-  },
-  "keywords": [],
-  "author": "Ernest Ruzindana",
-  "license": "ISC",
-  "bugs": {
-    "url": "https://github.com/ErnestRuzindana/myPortfolio-be/issues"
-  },
-  "homepage": "https://github.com/ErnestRuzindana/myPortfolio-be#readme",
   "dependencies": {
     "@hapi/joi": "^17.1.1",
     "bcrypt": "^5.0.1",
@@ -28,6 +9,7 @@
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
     "express-session": "^1.17.3",
+    "gh-pages": "^4.0.0",
     "jsonwebtoken": "^8.5.1",
     "memorystore": "^1.6.7",
     "mongoose": "^6.4.4",
