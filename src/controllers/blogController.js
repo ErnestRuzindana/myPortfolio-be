@@ -5,26 +5,44 @@ import commentLikeModel from "../models/commentLikeModel.js";
 import blogValidationSchema from "../validations/blogValidation.js";
 import Jwt from "jsonwebtoken"
 import blogModel from "../models/blogModel.js";
+import uploads from "../helpers/cloudinary.js";
+import fs from "fs"
 
 
 // Creating the post
 const createPost = async(request, response) =>{
+
     try{
+        //Validation
         const {error} = blogValidationSchema.validate(request.body)
 
         if (error)
             return response.status(400).json({"validationError": error.details[0].message})
 
+        //Upload Images to cloudinary
+        const uploader = async (path) => await uploads(path, "Ernest's Post Images")
+
+        const images = []
+        const files = request.files
+
+        for(const file of files) {
+            const {path} = file
+            const newPath = await uploader(path)
+
+            images.push(newPath)
+
+            fs.unlinkSync(path)
+        }
 
         const newPost = new blogSchema();
 
-        const postImageLink = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.postImage[0].filename}`
-        const headerImageLink = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.headerImage[0].filename}`
+        // const postImageLink = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.postImage[0].filename}`
+        // const headerImageLink = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.headerImage[0].filename}`
 
         newPost.title = request.body.title,
         newPost.postBody = request.body.postBody,
-        newPost.postImage = postImageLink,
-        newPost.headerImage = headerImageLink,
+        newPost.postImage = images[0].url,
+        newPost.headerImage = images[1].url,
         newPost.authorName = request.body.authorName,
         newPost.authorImage = request.body.authorImage,
         newPost.dateCreated = request.body.dateCreated

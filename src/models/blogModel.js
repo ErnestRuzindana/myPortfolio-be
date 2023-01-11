@@ -15,12 +15,12 @@ const blogSchema = new Schema({
 
     postImage: {
         type: String,
-        required: true,
+       
     },
 
     headerImage:{
         type: String,
-        required: true,
+       
     },
 
     dateCreated: {
