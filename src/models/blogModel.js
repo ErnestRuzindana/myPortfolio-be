@@ -20,7 +20,7 @@ const blogSchema = new Schema({
 
     headerImage: {
         type: String,
-          required: true
+        required: true
     },
 
     dateCreated: {
