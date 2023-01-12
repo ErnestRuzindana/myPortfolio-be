@@ -34,10 +34,10 @@ const corsOptions = {
  
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
-app.use(express.bodyParser({limit: '100mb'}));
+app.use(express.bodyParser({limit: '50mb'}));
 
-app.use(express.json({limit: "100mb", extended: true}))
-app.use(express.urlencoded({limit: "100mb", extended: true, parameterLimit: 50000}))
+app.use(express.json({limit: "50mb", extended: true}))
+app.use(express.urlencoded({limit: "50mb", extended: true, parameterLimit: 50000}))
 
 // app.use(express.urlencoded({ extended: true }));
 
