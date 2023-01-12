@@ -4,7 +4,7 @@ import upload from "../helpers/blogMulter.js";
 
 const router = express.Router()
 
-router.post("/createPost", upload.array('image'), blogController.createPost);
+router.post("/createPost", blogController.createPost);
 router.get("/getAllPosts", blogController.getPosts);
 router.get("/getSinglePost/:id", blogController.getSinglePost);
 router.put("/updatePost/:id", upload.array('image'), blogController.updatePost);

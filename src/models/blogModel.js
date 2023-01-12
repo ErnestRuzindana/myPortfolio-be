@@ -10,17 +10,29 @@ const blogSchema = new Schema({
 
     postBody: {
         type: String,
-        required: true,
+        required: true
     },
 
     postImage: {
-        type: String,
-       
+        public_id: {
+          type: String,
+          required: true
+        },
+        url: {
+          type: String,
+          required: true
+        }
     },
 
-    headerImage:{
-        type: String,
-       
+    headerImage: {
+        public_id: {
+          type: String,
+          required: true
+        },
+        url: {
+          type: String,
+          required: true
+        }
     },
 
     dateCreated: {
