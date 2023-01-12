@@ -27,19 +27,12 @@ const createPost = async(request, response) =>{
             folder: "Ernest's Post Images"
         })
 
-
         const newPost = new blogSchema();
 
         newPost.title = request.body.title,
         newPost.postBody = request.body.postBody,
-        newPost.postImage = {
-            public_id : postImageResult.public_id,
-            url: postImageResult.secure_url
-        },
-        newPost.headerImage = {
-            public_id : headerImageResult.public_id,
-            url: headerImageResult.secure_url
-        },
+        newPost.postImage = postImageResult.secure_url,
+        newPost.headerImage = headerImageResult.secure_url,
         newPost.authorName = request.body.authorName,
         newPost.authorImage = request.body.authorImage,
         newPost.dateCreated = request.body.dateCreated
