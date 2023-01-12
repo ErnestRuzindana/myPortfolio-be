@@ -6,6 +6,7 @@ import blogValidationSchema from "../validations/blogValidation.js";
 import Jwt from "jsonwebtoken"
 import blogModel from "../models/blogModel.js";
 import cloudinary from "../helpers/cloudinary.js";
+import fs from "fs"
 
 
 // Creating the post
@@ -13,11 +14,14 @@ const createPost = async(request, response) =>{
 
     try{
         //Validation
-        const {error} = blogValidationSchema.validate(request.body)
+        // const {error} = blogValidationSchema.validate(request.body)
 
-        if (error)
-            return response.status(400).json({"validationError": error.details[0].message})
+        // if (error)
+        //     return response.status(400).json({"validationError": error.details[0].message})
 
+        //Upload Images to cloudinary
+        // const postImageResult = async () => await uploads(request.body.postImage, "Ernest's Post Images") 
+        // const headerImageResult = async () => await uploads(request.body.headerImage, "Ernest's Post Images") 
 
         const postImageResult = cloudinary.uploader.upload(request.body.postImage, {
             folder: "Ernest's Post Images"
@@ -27,7 +31,11 @@ const createPost = async(request, response) =>{
             folder: "Ernest's Post Images"
         })
 
+       console.log(postImageResult.secure_url)
         const newPost = new blogSchema();
+
+        // const postImageLink = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.postImage[0].filename}`
+        // const headerImageLink = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.headerImage[0].filename}`
 
         newPost.title = request.body.title,
         newPost.postBody = request.body.postBody,
