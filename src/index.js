@@ -20,7 +20,7 @@ import socialMediaLoggedInUser from "./routes/socialMediaRoute.js";
 import blogRoute from "./routes/blogRoute.js";
 import subscriptionRoute from "./routes/subscriptionRoute.js";
 
-
+const port = process.env.PORT_NUMBER || 5300;
 
 dotenv.config()
 const ourMemoryStore = MemoryStore(expressSession);
@@ -69,12 +69,13 @@ mongoose.connect(process.env.DB_CONNECT,{useNewUrlParser: true});
 
 mongoose.connection.once("open", ()=>{
     console.log("connected to Mongo DB");
+
+    app.listen(port, ()=>{
+        console.log(`The server is running on ${port}`);
+    })
 })
 
 
-const port = process.env.PORT_NUMBER || 5300;
-app.listen(port, ()=>{
-    console.log(`The server is running on ${port}`);
-})
+
 
 

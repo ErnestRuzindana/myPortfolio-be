@@ -8,7 +8,7 @@
   "scripts": {
     "start": "node --require dotenv/config src/index.js",
     "dev": "nodemon --require dotenv/config src/index.js",
-    "predeploy": "npm run start",
+    "predeploy": "npm start",
     "deploy": "gh-pages -d build"
   },
   "repository": {
