@@ -104,15 +104,10 @@ const updatePost = async(request, response) =>{
         const post = await blogSchema.findOne({_id: request.params.id});
         if (post){
 
-            if(!request.file){
                 post.title = request.body.title || post.title,
                 post.postBody = request.body.postBody || post.postBody
-            }
-
-            else{
-                post.postImage = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.postImage[0].filename}` || post.postImage
-                post.headerImage = `https://ernestruzindana-be.cyclic.app/postImages/${request.files.headerImage[0].filename}` || post.headerImage
-            }
+                post.postImage = request.body.postImage || post.postImage
+                post.headerImage = request.body.headerImage || post.headerImage
 
             await post.save()
 

@@ -285,7 +285,6 @@ const updateUser = async(request, response) =>{
                 const ourLoggedInUser = await User.findById(decodedToken.userEmail._id) 
 
                 if (ourLoggedInUser){
-                    if (!request.file){
                         ourLoggedInUser.firstName = request.body.firstName || ourLoggedInUser.firstName,
                         ourLoggedInUser.lastName = request.body.lastName || ourLoggedInUser.lastName,
                         ourLoggedInUser.email = request.body.email || ourLoggedInUser.email,
@@ -294,11 +293,7 @@ const updateUser = async(request, response) =>{
                         ourLoggedInUser.profileTwitter = request.body.profileTwitter || ourLoggedInUser.profileTwitter,
                         ourLoggedInUser.profileLinkedin = request.body.profileLinkedin || ourLoggedInUser.profileLinkedin,
                         ourLoggedInUser.profileInstagram = request.body.profileInstagram || ourLoggedInUser.profileInstagram
-                    }
-                    
-                    else{
-                        ourLoggedInUser.imageLink = request.file.filename || ourLoggedInUser.imageLink
-                    }
+                        ourLoggedInUser.imageLink = request.body.imageLink || ourLoggedInUser.imageLink
                     
                     
                     const updatedUser = await ourLoggedInUser.save()

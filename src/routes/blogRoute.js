@@ -1,13 +1,12 @@
 import express from "express"
 import blogController from "../controllers/blogController.js";
-import upload from "../helpers/blogMulter.js";
 
 const router = express.Router()
 
 router.post("/createPost", blogController.createPost);
 router.get("/getAllPosts", blogController.getPosts);
 router.get("/getSinglePost/:id", blogController.getSinglePost);
-router.put("/updatePost/:id", upload.array('image'), blogController.updatePost);
+router.put("/updatePost/:id", blogController.updatePost);
 router.delete("/deletePost/:id", blogController.deletePost);
 router.put("/createComment/:id", blogController.createComment);
 router.get("/getAllComments/:id", blogController.getAllComments);
