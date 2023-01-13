@@ -297,7 +297,6 @@ const updateUser = async(request, response) =>{
                     
                     
                     const updatedUser = await ourLoggedInUser.save()
-                    console.log(request.file)
 
                     const newUser = {
                         firstName: updatedUser.firstName,
