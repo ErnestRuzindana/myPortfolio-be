@@ -20,7 +20,7 @@ import socialMediaLoggedInUser from "./routes/socialMediaRoute.js";
 import blogRoute from "./routes/blogRoute.js";
 import subscriptionRoute from "./routes/subscriptionRoute.js";
 
-const port = process.env.PORT_NUMBER || 5300;
+const port = process.env.PORT_NUMBER || 5000;
 
 dotenv.config()
 const ourMemoryStore = MemoryStore(expressSession);
