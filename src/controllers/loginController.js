@@ -4,6 +4,7 @@ import Jwt from "jsonwebtoken"
 import nodemailer from "nodemailer"
 import forgotPasswordValidationSchema from "../validations/forgotPasswordValidation.js"
 import resetPasswordValidationSchema from "../validations/resetPasswordValidation.js"
+import cloudinary from "../helpers/cloudinary.js";
 
 
 
@@ -18,7 +19,7 @@ const loginUser = async(request, response) =>{
 
         if(!userEmail.isVerified)
             return response.status(400).json({
-                "invalidEmail": "Please go to your email to verify your account!"
+                "invalidEmail": "Please check your email to verify this account!"
             })
 
         
@@ -268,17 +269,28 @@ const newPassword = async(request, response) =>{
 // update user profile
 
 const updateUser = async(request, response) =>{
+
+
     try{
-      const token = request.header("auth_token")
-      
-      if(!token)
+        
+        const token = request.header("auth_token")
+        
+        if(!token)
         return response.status(401).json({
             "message": "Please login!"
         })
 
+    
+        const result = await cloudinary.uploader.upload(request.body.imageLink, {
+            folder: "Ernest's User Images"
+        })
+
+
         Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodedToken)=>{
+            console.log(decodedToken)
             if(err){
                 console.log(err.message)
+                console.log("Invalid Token")
             }
 
             else{
@@ -293,7 +305,7 @@ const updateUser = async(request, response) =>{
                         ourLoggedInUser.profileTwitter = request.body.profileTwitter || ourLoggedInUser.profileTwitter,
                         ourLoggedInUser.profileLinkedin = request.body.profileLinkedin || ourLoggedInUser.profileLinkedin,
                         ourLoggedInUser.profileInstagram = request.body.profileInstagram || ourLoggedInUser.profileInstagram
-                        ourLoggedInUser.imageLink = request.body.imageLink || ourLoggedInUser.imageLink
+                        ourLoggedInUser.imageLink = result.secure_url || ourLoggedInUser.imageLink
                     
                     
                     const updatedUser = await ourLoggedInUser.save()

@@ -76,7 +76,7 @@ const createNewUser = async(request, response) =>{
             }
         })
 
-        response.status(201).json({"successMessage": `"${request.body.firstName}" account is created successfully!, check your email to verify your account`})
+        response.status(201).json({"successMessage": "Account created successfully!"})
     }
 
     catch(error){

@@ -5,7 +5,7 @@ import commentLikeModel from "../models/commentLikeModel.js";
 import blogValidationSchema from "../validations/blogValidation.js";
 import Jwt from "jsonwebtoken"
 import blogModel from "../models/blogModel.js";
-
+import cloudinary from "../helpers/cloudinary.js";
 
 // Creating the post
 const createPost = async(request, response) =>{
@@ -17,12 +17,19 @@ const createPost = async(request, response) =>{
         if (error)
             return response.status(400).json({"validationError": error.details[0].message})
 
+        const postImageResult = await cloudinary.uploader.upload(request.body.postImage, {
+            folder: "Ernest's Post Images"
+        })
+        const headerImageResult = await cloudinary.uploader.upload(request.body.headerImage, {
+            folder: "Ernest's Post Images"
+        })
+
         const newPost = new blogSchema();
 
         newPost.title = request.body.title,
         newPost.postBody = request.body.postBody,
-        newPost.postImage = request.body.postImage,
-        newPost.headerImage = request.body.headerImage,
+        newPost.postImage = postImageResult.secure_url,
+        newPost.headerImage = headerImageResult.secure_url,
         newPost.authorName = request.body.authorName,
         newPost.authorImage = request.body.authorImage,
         newPost.dateCreated = request.body.dateCreated
@@ -101,13 +108,21 @@ const getSinglePost = async(request, response) =>{
 // Updating the post
 const updatePost = async(request, response) =>{
     try{
+
+        const postImageResult = await cloudinary.uploader.upload(request.body.postImage, {
+            folder: "Ernest's Post Images"
+        })
+        const headerImageResult = await cloudinary.uploader.upload(request.body.headerImage, {
+            folder: "Ernest's Post Images"
+        })
+
         const post = await blogSchema.findOne({_id: request.params.id});
         if (post){
 
                 post.title = request.body.title || post.title,
                 post.postBody = request.body.postBody || post.postBody
-                post.postImage = request.body.postImage || post.postImage
-                post.headerImage = request.body.headerImage || post.headerImage
+                post.postImage = postImageResult.secure_url || post.postImage
+                post.headerImage = headerImageResult.secure_url || post.headerImage
 
             await post.save()
 
