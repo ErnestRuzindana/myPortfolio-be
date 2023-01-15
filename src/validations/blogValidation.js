@@ -9,12 +9,16 @@ const blogValidationSchema = Joi.object({
     authorImage: Joi.string(),
     dateCreated: Joi.string(),
 
-    commentBody: Joi.string(),
+    commentBody: Joi.string().required().messages({
+        "string.empty": "The comment field can not be empty"
+    }),
     commentorName: Joi.string(),
     commentorImage: Joi.string(),
     dateCommented: Joi.string(),
 
-    replyBody: Joi.string(),
+    replyBody: Joi.string().required().messages({
+        "string.empty": "The comment reply field can not be empty"
+    }),
     replierName: Joi.string(),
     replierImage: Joi.string(),
     dateReplied: Joi.string()
