@@ -459,31 +459,6 @@ const likeComment = async(request, response) =>{
     }
 }
 
-// Get all comment Likes
-const getAllCommentLikes = async(request, response) =>{
-    try{
-        const post = await blogSchema.findOne({_id: request.params.id});
-        const likes = post.comment_likes
-        
-        if (likes){
-            response.status(200).json({"fetchedLikes": likes})
-        }
-
-        else{
-            response.status(400).json({
-                "likeFetchedError": "No Likes!"
-            })  
-        }
-    }
-
-    catch(error){
-        console.log(error);
-        response.status(500).json({
-            "status": "fail", 
-            "message": error.message
-        })
-    }
-}
 
 // Reply on comments
 const commentReply = async(request, response) =>{
@@ -564,5 +539,5 @@ const getAllCommentReplies = async(request, response) =>{
 }
 
 export default {createPost, getPosts, getSinglePost, updatePost, deletePost, 
-    createComment, getAllComments, likePost, getAllLikes, likeComment, getAllCommentLikes,
+    createComment, getAllComments, likePost, getAllLikes, likeComment,
     commentReply, getSingleComment, getAllCommentReplies};

@@ -14,7 +14,6 @@ router.get("/getAllCommentReplies/:id", blogController.getAllCommentReplies);
 router.post("/likePost/:blog_id", blogController.likePost);
 router.get("/getAllLikes/:id", blogController.getAllLikes);
 router.post("/likeComment/:id/:commentId", blogController.likeComment);
-router.get("/getAllCommentLikes/:id", blogController.getAllCommentLikes);
 router.put("/commentReply/:id/:commentId", blogController.commentReply);
 router.get("/getSingleComment/:id/:commentId", blogController.getSingleComment);
 
