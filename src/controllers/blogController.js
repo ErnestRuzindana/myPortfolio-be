@@ -383,23 +383,7 @@ const getAllLikes = async(request, response) =>{
 // Like a comment
 const likeComment = async(request, response) =>{
     try{
-      let blog_id = request.params.blog_id
-      if(!mongoose.Types.ObjectId.isValid(blog_id)){
-        return response.status(400).json({ 
-            "messageInvalidId": "Invalid blog Id",
-            data: {}
-        })
-      }
-
-      const blog = await blogSchema.findOne({_id: blog_id});
-
-      if(!blog){
-        return response.status(400).json({ 
-            "messageNoBlog": "No blog found!",
-            data: {}
-        })
-      }
-      else{
+      
         let current_user_id
         const token = request.header("auth_token")
       
@@ -418,42 +402,51 @@ const likeComment = async(request, response) =>{
             }
         })
         
-        const comment_like = await commentLikeModel.findOne({ blog_id: blog_id, user_id: current_user_id})
+        
+        const comment_like = await commentLikeModel.findOne({ user_id: current_user_id })
+
 
         if(!comment_like){
             const commentLikeDoc = new commentLikeModel ({
-                blog_id: blog_id,
                 user_id: current_user_id
             })
             await commentLikeDoc.save();
 
-            await blogSchema.updateOne({_id: blog_id},
-                {
-                  $push:{comment_likes: current_user_id}
-                })
+            
 
-                return response.status(200).json({ 
-                    "messageLikeAdded": "Like successfully added!",
-                    data: {}
-                })
+            await blogSchema.findByIdAndUpdate({_id: request.params.id},{
+                $push: {"comments.$[element].comment_likes": current_user_id } 
+            },
+            {
+                arrayFilters: [{ "element._id": {_id: request.params.commentId} }],
+                new:true
+            })
+    
+
+            return response.status(200).json({ 
+                "messageLikeAdded": "Like successfully added!",
+                data: {}
+            })
         }
 
         else{
             await commentLikeModel.deleteOne({
-                _id:comment_like._id
+                _id: comment_like._id
             })
 
-            await blogSchema.updateOne({_id: comment_like.blog_id},
-                {
-                  $pull:{comment_likes: current_user_id}
-                })
+            await blogSchema.findByIdAndUpdate({_id: request.params.id},{
+                $pull: {"comments.$[element].comment_likes": current_user_id } 
+            },
+            {
+                arrayFilters: [{ "element._id": {_id: request.params.commentId} }],
+                new:true
+            })
 
-                return response.status(200).json({ 
-                    "messageLikeRemoved": "Like successfully removed!",
-                    data: {}
-                })
+            return response.status(200).json({ 
+                "messageLikeRemoved": "Like successfully removed!",
+                data: {}
+            })
         }
-      }
  
     }
 
