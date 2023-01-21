@@ -63,7 +63,7 @@ const getPosts = async(request, response) =>{
             ]
         }
         const allPosts = await blogSchema.find(query)
-        .sort({dateCreated: -1});
+        .sort({createdAt: -1});
 
         if (allPosts){
             response.status(200).json({"allAvailablePosts": allPosts})
