@@ -133,8 +133,8 @@ const forgotPassword = async(request, response) =>{
             subject: "Ernest's portfolio reset password",
             html: `
             <div style="padding: 10px;">
-                <h3> <span style="color: #cba10a;">${userEmailResetPassword.firstName} ${userEmailResetPassword.lastName} - </span> I can see that you forgot your password! </h3> 
-                <h4> Please reset password to continue... </h4>
+                <h3> ${userEmailResetPassword.firstName} ${userEmailResetPassword.lastName} I can see that you forgot your password! </h3> 
+                <h4> Click the button below to reset your password... </h4>
                 <a style="border-radius: 5px; margin-bottom: 10px; text-decoration: none; color: white; padding: 10px; cursor: pointer; background: #cba10a;" 
                 href="http://${request.headers.host}/login/resetPassword?resetToken=${resetPasswordToken}"> 
                 Reset password </a>

@@ -20,6 +20,17 @@ const createNewUser = async(request, response) =>{
         return response.status(409).json({"message": `The user with email "${request.body.email}" already exist`})
 
     try{
+        const sender = nodemailer.createTransport({
+            service:"gmail",
+            auth: {
+                user: "elannodeveloper@gmail.com",
+                pass: process.env.NODEMAILER_PASSWORD
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        })
+
 
         const salt = await bcrypt.genSalt()
 
@@ -38,17 +49,6 @@ const createNewUser = async(request, response) =>{
             isVerified: false
         })
 
-        const sender = nodemailer.createTransport({
-            service:"gmail",
-            auth: {
-                user: "elannodeveloper@gmail.com",
-                pass: process.env.NODEMAILER_PASSWORD
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        })
-
         const receiverEmail = await User.findOne({email: request.body.email})
 
         const mailOptions = {
@@ -57,7 +57,7 @@ const createNewUser = async(request, response) =>{
             subject: "Ernest's portfolio verify your email",
             html: `
             <div style="padding: 10px;">
-                <h3> <span style="color: #cba10a;">${receiverEmail.firstName} ${receiverEmail.lastName} - </span> Thank you for registering on my website! </h3> 
+                <h3> ${receiverEmail.firstName} ${receiverEmail.lastName} thank you for registering on my website! </h3> 
                 <h4> Please verify your email to continue... </h4>
                 <a style="border-radius: 5px; margin-bottom: 10px; text-decoration: none; color: white; padding: 10px; cursor: pointer; background: #cba10a;" 
                 href="http://${request.headers.host}/register/verifyEmail?token=${receiverEmail.emailToken}"> 
@@ -75,8 +75,6 @@ const createNewUser = async(request, response) =>{
                 console.log("Verification email sent to your account")
             }
         })
-
-        
 
         response.status(201).json({"successMessage": "Account created successfully!"})
     }
