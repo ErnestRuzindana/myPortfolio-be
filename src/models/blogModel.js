@@ -80,6 +80,11 @@ const blogSchema = new Schema({
 
     }],
 
+    dateCreated: {
+        type: Date,
+        default: Date.now,
+    },
+
     
 
 })

@@ -55,7 +55,15 @@ const createPost = async(request, response) =>{
 // Getting all the posts
 const getPosts = async(request, response) =>{
     try{
-        const allPosts = await blogSchema.find();
+        let query = {};
+        if(request.query.keyword){
+            query.$or=[
+                {"title": { $regex: request.query.keyword, $options: 'i'}},
+                {"postBody": { $regex: request.query.keyword, $options: 'i'}}
+            ]
+        }
+        const allPosts = await blogSchema.find(query)
+        .sort({dateCreated: -1});
 
         if (allPosts){
             response.status(200).json({"allAvailablePosts": allPosts})
