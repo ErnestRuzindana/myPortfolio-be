@@ -41,7 +41,8 @@ const sendMessage = async(request, response) =>{
 
 const getAllMessages = async(request, response) =>{
     try{
-        const clientMessages = await contact.find();
+        const clientMessages = await contact.find()
+        .sort({createdAt: -1});
 
         response.status(200).json({
             "status": "Successfully retrieved all the messages!",

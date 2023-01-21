@@ -101,7 +101,8 @@ const verifyEmail = async(request, response) =>{
 
 const getAllSubscriptions = async(request, response) =>{
     try{
-        const subscribers = await subscription.find();
+        const subscribers = await subscription.find()
+        .sort({createdAt: -1});
 
         response.status(200).json({
             "status": "Successfully retrieved all subscribers!",

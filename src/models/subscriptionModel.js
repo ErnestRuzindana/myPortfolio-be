@@ -22,6 +22,11 @@ const subscriptionSchema = new Schema ({
         type: Date, 
         default: Date.now
     },
+
+    createdAt: {
+        type: Date,
+        default: Date.now,
+    },
 })
 
 export default mongoose.model("Subscription", subscriptionSchema);
