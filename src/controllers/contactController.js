@@ -125,7 +125,7 @@ const replyMessage = async (request, response) => {
             to: senderMessage.email,
             subject: "Ernest's portfolio reply message",
             html: `
-            <div style="padding: 10px;">
+            <div style="padding: 10px 0px;">
                 <h4> 
                 ${senderMessage.replyMessage}
                 </h4>

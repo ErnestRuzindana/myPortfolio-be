@@ -20,17 +20,6 @@ const createNewUser = async(request, response) =>{
         return response.status(409).json({"message": `The user with email "${request.body.email}" already exist`})
 
     try{
-        const sender = nodemailer.createTransport({
-            service:"gmail",
-            auth: {
-                user: "elannodeveloper@gmail.com",
-                pass: process.env.NODEMAILER_PASSWORD
-            },
-            tls: {
-                rejectUnauthorized: false
-            }
-        })
-
 
         const salt = await bcrypt.genSalt()
 
@@ -47,6 +36,17 @@ const createNewUser = async(request, response) =>{
             repeatPassword: hashedRepeatPassword,
             emailToken: crypto.randomBytes(64).toString("hex"),
             isVerified: false
+        })
+
+        const sender = nodemailer.createTransport({
+            service:"gmail",
+            auth: {
+                user: "elannodeveloper@gmail.com",
+                pass: process.env.NODEMAILER_PASSWORD
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
         })
 
         const receiverEmail = await User.findOne({email: request.body.email})
@@ -75,6 +75,8 @@ const createNewUser = async(request, response) =>{
                 console.log("Verification email sent to your account")
             }
         })
+
+        
 
         response.status(201).json({"successMessage": "Account created successfully!"})
     }
