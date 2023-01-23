@@ -411,7 +411,7 @@ const likeComment = async(request, response) =>{
         })
         
         
-        const comment_like = await commentLikeModel.findOne({ user_id: current_user_id })
+        const comment_like = await commentLikeModel.findOne({ comment_id: request.body.comment_id, user_id: current_user_id })
 
 
         if(!comment_like){
