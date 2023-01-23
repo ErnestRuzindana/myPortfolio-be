@@ -135,7 +135,7 @@ const updatePost = async(request, response) =>{
             await post.save()
 
             response.status(200).json({
-                "postUpdateSuccess": "This post is updated successfully!",
+                "postUpdateSuccess": "Post updated successfully!",
                 "updatedPost": post
             })
         }
@@ -165,7 +165,7 @@ const deletePost = async(request, response) =>{
         await post.deleteOne()
 
         response.status(200).json({
-            "deletedPost": `The post title ${post.title} has been deleted successfully!`
+            "deletedPost": `The post with title ${post.title} has been deleted successfully!`
         })
 
     }

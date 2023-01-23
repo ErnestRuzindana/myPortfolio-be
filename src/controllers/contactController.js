@@ -24,6 +24,42 @@ const sendMessage = async(request, response) =>{
             "received message": receivedMessage
         })
 
+        const sender = nodemailer.createTransport({
+            service:"gmail",
+            auth: {
+                user: request.body.email,
+                pass: process.env.NODEMAILER_PASSWORD
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        })
+
+
+        const mailOptions = {
+            from: `"${request.body.names}" <${request.body.email}>`,
+            to: "niyonshutijeanette4@gmail.com",
+            subject: "You have a new client message",
+            html: `
+            <div style="padding: 10px 0px;">
+                <h3> ${request.body.names} with email ${request.body.email} and phone number ${request.body.phoneNumber} wrote: </h3> 
+                <h4> ${request.body.message} </h4>
+            </div>
+            `
+        }
+
+
+        sender.sendMail(mailOptions, function(error, info){
+            if(error){
+                console.log(error)
+            }
+
+            else{
+                console.log("Email Sent successfully!")
+
+            }
+        })
+
     }
     
     catch(error){
