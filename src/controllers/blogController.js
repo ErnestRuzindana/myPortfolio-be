@@ -416,7 +416,8 @@ const likeComment = async(request, response) =>{
 
         if(!comment_like){
             const commentLikeDoc = new commentLikeModel ({
-                user_id: current_user_id
+                user_id: current_user_id,
+                comment_id: request.body.comment_id
             })
             await commentLikeDoc.save();
 
