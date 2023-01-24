@@ -36,7 +36,7 @@ const loginUser = async(request, response) =>{
 
         const userRole = userEmail.role;
         response.set("token", token).json({
-            "successMessage": "You are successfully logged in", "Access_Token": token, "role": userRole
+            "successMessage": "Logged In Successfully!", "Access_Token": token, "role": userRole
         })
     }
 
@@ -353,7 +353,7 @@ const updateUser = async(request, response) =>{
                     }
 
                     response.status(200).json({
-                        "message": "User updated successfully!",
+                        "message": "Profile updated successfully!",
                         "ourUpdatedUser": newUser
                     })
                 }

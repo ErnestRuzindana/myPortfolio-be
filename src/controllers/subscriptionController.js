@@ -36,9 +36,9 @@ const Subscribe = async(request, response) =>{
             to: Subscriber.subscriberEmail,
             subject: "Ernest's portfolio verify your email",
             html: `
-            <div style="padding: 10px;">
+            <div style="padding: 10px 0px;">
                 <h3> Thank you for subscribing on my website! </h3> 
-                <h4> Click the button below to verify your email </h4>
+                <h4> Click the button below to verify your email... </h4>
                 <a style="border-radius: 5px; margin-bottom: 10px; text-decoration: none; color: white; padding: 10px; cursor: pointer; background: #cba10a;" 
                 href="http://${request.headers.host}/verifyEmail?token=${Subscriber.emailToken}"> 
                 Verify Email </a>

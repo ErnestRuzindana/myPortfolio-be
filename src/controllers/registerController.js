@@ -56,7 +56,7 @@ const createNewUser = async(request, response) =>{
             to: receiverEmail.email,
             subject: "Ernest's portfolio verify your email",
             html: `
-            <div style="padding: 10px;">
+            <div style="padding: 10px 0;">
                 <h3> ${receiverEmail.firstName} ${receiverEmail.lastName} thank you for registering on my website! </h3> 
                 <h4> Please verify your email to continue... </h4>
                 <a style="border-radius: 5px; margin-bottom: 10px; text-decoration: none; color: white; padding: 10px; cursor: pointer; background: #cba10a;" 
