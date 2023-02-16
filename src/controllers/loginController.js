@@ -31,12 +31,14 @@ const loginUser = async(request, response) =>{
             })
 
         
-        const token = Jwt.sign({userEmail} , process.env.ACCESS_TOKEN_SECRET)
+        const token = Jwt.sign({ data : userEmail } , process.env.ACCESS_TOKEN_SECRET)
         response.header("auth_token", token)
 
         const userRole = userEmail.role;
         response.set("token", token).json({
-            "successMessage": "Logged In Successfully!", "Access_Token": token, "role": userRole
+            "successMessage": "Logged In Successfully!", 
+            "Access_Token": token, 
+            "role": userRole
         })
     }
 
@@ -52,24 +54,12 @@ const loginUser = async(request, response) =>{
 
 const loggedInUser = async(request, response) =>{
     try{
-      const token = request.header("auth_token")
-      
-      if(!token)
-        return response.status(401).json({
-            "message": "Please login!"
-        })
 
-        Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodedToken)=>{
-            if(err){
-                console.log(err.message)
-            }
+        const loggedInUser = await User.findOne({ _id : request.user._id })
 
-            else{
-                console.log(decodedToken)
-
-                const myLoggedInUser = await User.findById(decodedToken.userEmail._id)
-                response.status(200).json(myLoggedInUser)
-            }
+        response.status(200).json({
+            "successMessage": "LoggedIn User Fetched Successfully!",
+            "loggedInUser": loggedInUser, 
         })
     }
 
@@ -193,8 +183,7 @@ const resetPassword = async(request, response) =>{
       }
 
       else{
-        console.log("Password not reset")
-        response.send("Password not reset")
+        response.send("You can't use this reset password link twice! If you wish to reset your password again, consider repeating the request!")
       }
 
     }
@@ -273,54 +262,41 @@ const updateUser = async(request, response) =>{
 
     try{
         
-        const token = request.header("auth_token")
-        
-        if(!token)
-        return response.status(401).json({
-            "message": "Please login!"
-        })
 
-    
-        const result = await cloudinary.uploader.upload(request.body.imageLink, {
-            folder: "Ernest's User Images"
-        })
-
-
-        Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodedToken)=>{
-            console.log(decodedToken)
-            if(err){
-                console.log(err.message)
-                console.log("Invalid Token")
-            }
-
-            else{
-                const ourLoggedInUser = await User.findById(decodedToken.userEmail._id) 
+                const ourLoggedInUser = await User.findById(request.user._id) 
 
                 if (ourLoggedInUser){
+
+                    if (request.body.imageLink){
+                        const result = await cloudinary.uploader.upload(request.body.imageLink, {
+                            folder: "Ernest's User Images"
+                        })
+
                         ourLoggedInUser.firstName = request.body.firstName || ourLoggedInUser.firstName,
                         ourLoggedInUser.lastName = request.body.lastName || ourLoggedInUser.lastName,
-                        ourLoggedInUser.email = request.body.email || ourLoggedInUser.email,
                         ourLoggedInUser.bio = request.body.bio || ourLoggedInUser.bio,
                         ourLoggedInUser.profileFacebook = request.body.profileFacebook || ourLoggedInUser.profileFacebook,
                         ourLoggedInUser.profileTwitter = request.body.profileTwitter || ourLoggedInUser.profileTwitter,
                         ourLoggedInUser.profileLinkedin = request.body.profileLinkedin || ourLoggedInUser.profileLinkedin,
                         ourLoggedInUser.profileInstagram = request.body.profileInstagram || ourLoggedInUser.profileInstagram
                         ourLoggedInUser.imageLink = result.secure_url || ourLoggedInUser.imageLink
-                    
-                    
-                    const updatedUser = await ourLoggedInUser.save()
-
-                    const newUser = {
-                        firstName: updatedUser.firstName,
-                        lastName: updatedUser.lastName,
-                        email: updatedUser.email,
-                        bio: updatedUser.bio,
-                        imageLink: updatedUser.imageLink,
-                        profileFacebook: updatedUser.profileFacebook,
-                        profileTwitter: updatedUser.profileTwitter,
-                        profileLinkedin: updatedUser.profileLinkedin,   
-                        profileInstagram: updatedUser.profileInstagram
                     }
+
+                    else{
+                        ourLoggedInUser.firstName = request.body.firstName || ourLoggedInUser.firstName,
+                        ourLoggedInUser.lastName = request.body.lastName || ourLoggedInUser.lastName,
+                        ourLoggedInUser.bio = request.body.bio || ourLoggedInUser.bio,
+                        ourLoggedInUser.profileFacebook = request.body.profileFacebook || ourLoggedInUser.profileFacebook,
+                        ourLoggedInUser.profileTwitter = request.body.profileTwitter || ourLoggedInUser.profileTwitter,
+                        ourLoggedInUser.profileLinkedin = request.body.profileLinkedin || ourLoggedInUser.profileLinkedin,
+                        ourLoggedInUser.profileInstagram = request.body.profileInstagram || ourLoggedInUser.profileInstagram                       
+                    }
+                        
+                    
+                    
+                    await ourLoggedInUser.save()
+
+                   
 
                     if(request.body.profileFacebook == ""){
                         ourLoggedInUser.profileFacebook = undefined;
@@ -354,15 +330,14 @@ const updateUser = async(request, response) =>{
 
                     response.status(200).json({
                         "message": "Profile updated successfully!",
-                        "ourUpdatedUser": newUser
+                        "ourUpdatedUser": ourLoggedInUser
                     })
                 }
 
                 else{
                     response.status(404).json({"message": "User not found!"})
                 }
-            }
-        })
+
     }
 
     catch(error){

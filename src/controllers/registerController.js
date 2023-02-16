@@ -39,7 +39,7 @@ const createNewUser = async(request, response) =>{
         const hashedRepeatPassword = await bcrypt.hash(request.body.repeatPassword, salt)
         
 
-        await User.create({
+        const newUser = new User({
             firstName: request.body.firstName,
             lastName: request.body.lastName,
             email: request.body.email,
@@ -49,18 +49,18 @@ const createNewUser = async(request, response) =>{
             isVerified: false
         })
 
-        const receiverEmail = await User.findOne({email: request.body.email})
+        await newUser.save();
 
         const mailOptions = {
             from: '"Ernest RUZINDANA" <elannodeveloper@gmail.com>',
-            to: receiverEmail.email,
-            subject: "Ernest's portfolio verify your email",
+            to: newUser.email,
+            subject: "Ernest's portfolio | Verify your email",
             html: `
             <div style="padding: 10px 0;">
-                <h3> ${receiverEmail.firstName} ${receiverEmail.lastName} thank you for registering on my website! </h3> 
+                <h3> ${newUser.firstName} ${newUser.lastName} thank you for registering on my website! </h3> 
                 <h4> Please verify your email to continue... </h4>
                 <a style="border-radius: 5px; margin-bottom: 10px; text-decoration: none; color: white; padding: 10px; cursor: pointer; background: #cba10a;" 
-                href="http://${request.headers.host}/register/verifyEmail?token=${receiverEmail.emailToken}"> 
+                href="http://${request.headers.host}/register/verifyEmail?token=${newUser.emailToken}"> 
                 Verify Email </a>
             </div>
             `
@@ -103,6 +103,10 @@ const verifyEmail = async(request, response) =>{
             await emailUser.save()
 
             response.redirect(process.env.EMAILVERIFIED_REDIRECT_URL)
+        }
+
+        else{
+            response.send("This email is already verified!")
         }
     }
 

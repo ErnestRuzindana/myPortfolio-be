@@ -1,9 +1,10 @@
 import express from "express"
 import blogController from "../controllers/blogController.js";
+import authentication from "../middlewares/authentication.js"
 
 const router = express.Router()
 
-router.post("/createPost", blogController.createPost);
+router.post("/createPost", authentication.authLogin, blogController.createPost);
 router.get("/getAllPosts", blogController.getPosts);
 router.get("/getSinglePost/:id", blogController.getSinglePost);
 router.put("/updatePost/:id", blogController.updatePost);

@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import moment from "moment";
 
 const Schema = mongoose.Schema
 
@@ -23,71 +24,29 @@ const blogSchema = new Schema({
         required: true
     },
 
-    dateCreated: {
-        type: String
+    slug: {
+        type: String,
+        required: true,
+        unique: true
     },
 
-    authorName: {
-        type: String
-    },
+    createdBy: {type: Schema.Types.ObjectId, ref: "User" },
 
-    authorImage: {
-        type: String
-    },
+    // blog_comments:[{type: mongoose.Schema.Types.ObjectId, ref: 'BlogComment' }],
 
-    blog_likes:[{
-        type: Schema.Types.ObjectId, ref: "BlogLike" 
-    }],
+    // blog_likes:[{type: mongoose.Schema.Types.ObjectId, ref: 'BlogLike' }]
+  
 
-    comments:[{
-        commentBody: {
-            type: String
-        },
-    
-        dateCommented: {
-            type: String
-        },
-    
-        commentorName: {
-            type: String
-        },
-    
-        commentorImage: {
-            type: String
-        },
-        
-        commentReplies:[{
-            replyBody: {
-                type: String
-            },
-        
-            dateReplied: {
-                type: String
-            },
-        
-            replierName: {
-                type: String
-            },
-        
-            replierImage: {
-                type: String
-            }
-        }],
-        
-        comment_likes:[{
-            type: Schema.Types.ObjectId, ref: "CommentLike" 
-        }],
-
-    }],
-
-    createdAt: {
-        type: Date,
-        default: Date.now,
-    },
-
-    
-
+}, {
+    timestamps: true
 })
 
+blogSchema.set('toJSON', {
+    virtuals: true,
+    transform: function (doc, ret) {
+        ret.createdAt = moment(ret.createdAt).format('MMMM, DD YYYY');
+        ret.updatedAt = moment(ret.updatedAt).format('MMMM, DD YYYY');
+    }
+});
 
 export default mongoose.model("Blog", blogSchema)

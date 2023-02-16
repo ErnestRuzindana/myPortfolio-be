@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import slugify from "slugify";
 import blogSchema from "../models/blogModel.js";
 import blogLikeModel from "../models/blogLikeModel.js";
 import commentLikeModel from "../models/commentLikeModel.js";
@@ -24,30 +25,37 @@ const createPost = async(request, response) =>{
             folder: "Ernest's Post Images"
         })
 
-        const newPost = new blogSchema();
+        const newPost = new blogSchema({
+            title : request.body.title,
+            postBody : request.body.postBody,
+            postImage : postImageResult.secure_url,
+            headerImage : headerImageResult.secure_url,
+            createdBy : request.user._id,
+			slug : slugify(request.body.title, { lower: true, strict: true })
+        });
 
-        newPost.title = request.body.title,
-        newPost.postBody = request.body.postBody,
-        newPost.postImage = postImageResult.secure_url,
-        newPost.headerImage = headerImageResult.secure_url,
-        newPost.authorName = request.body.authorName,
-        newPost.authorImage = request.body.authorImage,
-        newPost.dateCreated = request.body.dateCreated
-
-        await newPost.save()
+        const blogPost = await newPost.save()
+        const populatedPost = await blogPost.populate('createdBy')
 
         response.status(200).json({
             "successMessage": "Post created successfully!",
-            "postContent": newPost
+            "postContent": populatedPost
         })
     }
 
     catch(error){
         console.log(error);
-        response.status(500).json({
-            "status": "fail", 
-            "message": error.message
-        })
+		if (error.code === 11000 || error.code === 11001) {
+            response.status(400).json({
+				"duplicationError": "You already have a post with this title!"
+			})
+		} else{
+			response.status(500).json({
+				"status": "fail", 
+				"message": error.message
+			})
+		}
+        
     }
 }
 
