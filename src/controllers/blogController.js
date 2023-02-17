@@ -1,11 +1,14 @@
 import mongoose from "mongoose";
 import slugify from "slugify";
 import blogSchema from "../models/blogModel.js";
+import blogCommentModel from "../models/blogCommentModel.js";
 import blogLikeModel from "../models/blogLikeModel.js";
 import commentLikeModel from "../models/commentLikeModel.js";
+import commentReplyModel from "../models/commentReplyModel.js";
+import categoryModel from "../models/categoryModel.js";
 import blogValidationSchema from "../validations/blogValidation.js";
-import Jwt from "jsonwebtoken"
-import blogModel from "../models/blogModel.js";
+import commentValidationSchema from "../validations/commentValidation.js";
+import commentReplyValidationSchema from "../validations/commentReplyValidation.js";
 import cloudinary from "../helpers/cloudinary.js";
 
 // Creating the post
@@ -21,21 +24,18 @@ const createPost = async(request, response) =>{
         const postImageResult = await cloudinary.uploader.upload(request.body.postImage, {
             folder: "Ernest's Post Images"
         })
-        const headerImageResult = await cloudinary.uploader.upload(request.body.headerImage, {
-            folder: "Ernest's Post Images"
-        })
 
         const newPost = new blogSchema({
             title : request.body.title,
             postBody : request.body.postBody,
+            category : request.body.category,
             postImage : postImageResult.secure_url,
-            headerImage : headerImageResult.secure_url,
             createdBy : request.user._id,
 			slug : slugify(request.body.title, { lower: true, strict: true })
         });
 
         const blogPost = await newPost.save()
-        const populatedPost = await blogPost.populate('createdBy')
+        const populatedPost = await (await blogPost.populate('createdBy')).populate('category');
 
         response.status(200).json({
             "successMessage": "Post created successfully!",
@@ -63,18 +63,135 @@ const createPost = async(request, response) =>{
 // Getting all the posts
 const getPosts = async(request, response) =>{
     try{
-        let query = {};
-        if(request.query.keyword){
-            query.$or=[
-                {"title": { $regex: request.query.keyword, $options: 'i'}},
-                {"postBody": { $regex: request.query.keyword, $options: 'i'}}
-            ]
-        }
-        const allPosts = await blogSchema.find(query)
-        .sort({createdAt: -1});
+        
+        // Populate post creator details
+        let query=[
+			{
+				$lookup:
+				{
+				 from: "users",
+				 localField: "createdBy",
+				 foreignField: "_id",
+				 as: "postCreator"
+				}
+			},
+			{$unwind: '$postCreator'},
+            {
+				$lookup:
+				{
+				 from: "categories",
+				 localField: "category",
+				 foreignField: "_id",
+				 as: "categoryDetails"
+				}
+			},
+			{$unwind: '$categoryDetails'},
+		];
+
+        // Search functionality
+        if(request.query.keyword && request.query.keyword!=''){ 
+			query.push({
+			  $match: { 
+			    $or :[
+			      {
+			        title : { $regex: request.query.keyword, $options: 'i' } 
+			      },
+			      {
+			        postBody : { $regex: request.query.keyword, $options: 'i' } 
+			      },
+                  {
+			        'categoryDetails.name' : { $regex: request.query.keyword, $options: 'i' } 
+			      },
+			      {
+			        'postCreator.firstName' : { $regex: request.query.keyword, $options: 'i' } 
+			      },
+			      {
+			        'postCreator.lastName' : { $regex: request.query.keyword, $options: 'i' } 
+			      }
+			    ]
+			  }
+			});
+		}
+
+        // Get posts for each author
+        if(request.query.userId){		
+			query.push({
+			    $match: { 
+			    	createdBy:mongoose.Types.ObjectId(request.query.userId),
+			    }	
+			});
+		}
+
+        // Get posts for each category
+        if(request.query.category){		
+			query.push({
+			    $match: { 
+			    	'categoryDetails.slug':request.query.category,
+			    }	
+			});
+		}
+
+        // Sort functionality
+        if(request.query.sortBy && request.query.sortOrder){
+			var sort = {};
+			sort[request.query.sortBy] = (request.query.sortOrder=='asc')?1:-1;
+			query.push({
+				$sort: sort
+			});
+		}else{
+			query.push({
+				$sort: {createdAt:-1}
+			});	
+		}
+
+        // Pagination functionality
+        let total = await blogSchema.countDocuments(query);
+		let page=(request.query.page)?parseInt(request.query.page):1;
+		let perPage=(request.query.perPage)?parseInt(request.query.perPage):5;
+		let skip=(page-1)*perPage;
+		query.push({
+			$skip:skip,
+		});
+		query.push({
+			$limit:perPage,
+		});
+
+        // Only show needed fields
+        query.push(
+	    	{ 
+	    		$project : {
+    			"_id":1,
+    			"createdAt":1,
+	    		"title": 1,
+	    		"slug": 1,
+				"postImage":1,
+				"postCreator._id":1 ,
+	    		"postCreator.firstName":1,
+	    		"postCreator.lastName":1,
+                "postCreator.imageLink":1,
+	    		"categoryDetails.name":1,
+	    		"categoryDetails.slug":1,
+				"comments_count":{$size:{"$ifNull":["$blog_comments",[]]}},
+				"likes_count":{$size:{"$ifNull":["$blog_likes",[]]}}
+	    		} 
+	    	}
+	    );
+
+        
+
+
+        const allPosts = await blogSchema.aggregate(query);
 
         if (allPosts){
-            response.status(200).json({"allAvailablePosts": allPosts})
+            response.status(200).json({
+                "allAvailablePosts": allPosts.map(doc => blogSchema.hydrate(doc)),
+                "paginationDetails":{
+                    total:total,
+                    currentPage:page,
+                    perPage:perPage,
+                    totalPages:Math.ceil(total/perPage)
+                }
+            })
         }
 
         else{
@@ -96,10 +213,90 @@ const getPosts = async(request, response) =>{
 // Getting a single post
 const getSinglePost = async(request, response) =>{
     try{
-        const post = await blogSchema.findOne({_id: request.params.id});
+
+		let slug = request.query.slug;
+
+		let query=[
+			{
+				$lookup:
+				{
+				 from: "users",
+				 localField: "createdBy",
+				 foreignField: "_id",
+				 as: "postCreator"
+				}
+			},
+			{$unwind: '$postCreator'},
+            {
+				$lookup:
+				{
+				 from: "categories",
+				 localField: "category",
+				 foreignField: "_id",
+				 as: "categoryDetails"
+				}
+			},
+			{$unwind: '$categoryDetails'},
+			{
+				$match:{
+					'slug': slug
+				}
+			}
+		];
+
+
+		// Only show needed fields
+        query.push(
+	    	{ 
+	    		$project : {
+    			"_id":1,
+    			"createdAt":1,
+	    		"title": 1,
+				"slug": 1,
+				"postBody": 1,
+				"postImage":1,
+				"blog_likes":1,
+				"postCreator._id":1 ,
+	    		"postCreator.firstName":1,
+	    		"postCreator.lastName":1,
+	    		"postCreator.imageLink":1,
+                "categoryDetails.name":1,
+				"comments_count":{$size:{"$ifNull":["$blog_comments",[]]}},
+				"likes_count":{$size:{"$ifNull":["$blog_likes",[]]}}
+	    		} 
+	    	}
+	    );
+
+		let total = await blogSchema.countDocuments(query);
+
+        const post = await blogSchema.aggregate(query);
         
         if (post){
-            response.status(200).json({"fetchedPost": post})
+
+			if(post.length>0){
+
+			let blog= post[0];
+			let current_user= request.user;
+			let liked_by_current_user= false;
+			if(current_user){
+				let blog_like=await blogLikeModel.findOne({
+					blog_id:blog._id,
+					user_id:current_user._id
+				});
+				if(blog_like){
+					liked_by_current_user= true;
+				}
+			}
+
+			response.status(200).json({
+				"fetchedPost": blogSchema.hydrate(blog),
+				"fetchedPostDetails":{
+					liked_by_current_user: liked_by_current_user,
+					totalPosts: total
+				} 
+			})
+		}
+            
         }
 
         else{
@@ -125,27 +322,43 @@ const getSinglePost = async(request, response) =>{
 const updatePost = async(request, response) =>{
     try{
 
-        const postImageResult = await cloudinary.uploader.upload(request.body.postImage, {
-            folder: "Ernest's Post Images"
-        })
-        const headerImageResult = await cloudinary.uploader.upload(request.body.headerImage, {
-            folder: "Ernest's Post Images"
-        })
+		let slug = request.query.slug;
 
-        const post = await blogSchema.findOne({_id: request.params.id});
+        const post = await blogSchema.findOne({slug: slug});
         if (post){
 
-                post.title = request.body.title || post.title,
-                post.postBody = request.body.postBody || post.postBody
-                post.postImage = postImageResult.secure_url || post.postImage
-                post.headerImage = headerImageResult.secure_url || post.headerImage
+			let current_user = request.user;
 
+			if(post.createdBy!= current_user._id){
+				return response.status(400).json({
+					"unauthorizedError":'Access denied, you are not the creator of this post!',
+			});
+			}else{
+
+				if (request.body.postImage) {
+					const postImageResult = await cloudinary.uploader.upload(request.body.postImage, {
+						folder: "Ernest's Post Images"
+					})
+	
+					post.title = request.body.title || post.title,
+                	post.postBody = request.body.postBody || post.postBody
+                	post.category = request.body.category || post.category
+                	post.postImage = postImageResult.secure_url || post.postImage
+	
+				  } else {
+					post.title = request.body.title || post.title,
+                	post.postBody = request.body.postBody || post.postBody
+					post.category = request.body.category || post.category
+				  }
+                
             await post.save()
 
             response.status(200).json({
                 "postUpdateSuccess": "Post updated successfully!",
                 "updatedPost": post
             })
+
+		}
         }
         else{
             response.status(400).json({
@@ -168,13 +381,39 @@ const updatePost = async(request, response) =>{
 // Deleting a post
 const deletePost = async(request, response) =>{
     try{
-        const post = await blogSchema.findOne({_id: request.params.id});
+		let blog_id = request.params.blog_id;
 
-        await post.deleteOne()
+		if(!mongoose.Types.ObjectId.isValid(blog_id)){
+			return response.status(400).json({
+				"invalidId":'Something went wrong, refresh your page and try again!',
+			});
+		}
 
-        response.status(200).json({
-            "deletedPost": `The post with title ${post.title} has been deleted successfully!`
-        })
+        const post = await blogSchema.findOne({_id: blog_id});
+
+		if (post){
+
+			let current_user = request.user;
+
+			if(post.createdBy!= current_user._id){
+				return response.status(400).json({
+			  		"unauthorizedError":'Access denied, you are not the creator of this post!',
+			  	});
+			}else{
+				await post.deleteOne()
+
+				response.status(200).json({
+					"deletedPost": `Post deleted successfully!`
+				})
+		}
+        }
+        else{
+            response.status(400).json({
+                "postUpdateError": "Post not found!"
+            })
+        }
+
+        
 
     }
 
@@ -187,40 +426,128 @@ const deletePost = async(request, response) =>{
     }
 }
 
-// Creating the comment
+
+// Add a category
+const addCategory = async(request, response) =>{
+
+    try{
+        //Validation
+        const {error} = blogValidationSchema.validate(request.body)
+
+        const newCategory = new categoryModel({
+            slug : request.body.slug,
+            name : request.body.name,
+        });
+
+        const blogCategory = await newCategory.save()
+
+        response.status(200).json({
+            "successMessage": "Category created successfully!",
+            "categoryContent": blogCategory
+        })
+    }
+
+    catch(error){
+        console.log(error);
+			response.status(500).json({
+				"status": "fail", 
+				"message": error.message
+			})
+    }
+}
+
+// Get all categories
+const getAllCategories = async(request, response) =>{
+    try{
+        const allCategories = await categoryModel.find()
+
+        response.status(200).json({
+            "successMessage": "Successfully retrieved all Categories!",
+            "allCategories": allCategories
+        })
+    }
+
+    catch(error){
+        console.log(error);
+        response.status(500).json({
+            "status": "fail", 
+            "message": error.message
+        })
+    }
+}
+
+const deleteCategory = async(request, response) =>{
+    try{
+
+        await categoryModel.deleteOne({_id: request.query.categoryId});
+
+        response.status(200).json({
+            "successMessage": "Category deleted successfully!"
+        })
+    }
+
+    catch(error){
+        console.log(error);
+        response.status(500).json({
+            "status": "fail", 
+            "message": error.message
+        })
+    }
+}
+
+
+// Create a comment
 const createComment = async(request, response) =>{
     try{
-      const token = request.header("auth_token")
-      
-      if(!token)
-        return response.status(401).json({
-            "commentError": "Please login to comment!"
-        })
 
-        const {error} = blogValidationSchema.validate(request.body)
+		//Validation
+        const {error} = commentValidationSchema.validate(request.body)
 
         if (error)
             return response.status(400).json({"validationError": error.details[0].message})
 
-        const comment = {
-            commentBody : request.body.commentBody,
-            commentorName : request.body.commentorName,
-            commentorImage : request.body.commentorImage,
-            dateCommented : request.body.dateCommented
+		let blog_id = request.params.blog_id;
+
+		if(!mongoose.Types.ObjectId.isValid(blog_id)){
+			return response.status(400).json({
+				"invalidId":'Something went wrong, refresh your page and try again!',
+			});
+		}
+
+		const post = await blogSchema.findOne({_id: blog_id});
+
+		if (post){
+
+			const newComment = new blogCommentModel({
+				comment : request.body.comment,
+				blog_id : blog_id,
+				user_id : request.user._id,
+			});
+	
+			const commentData = await newComment.save()
+
+			await blogSchema.updateOne(
+				{_id : blog_id},
+				{
+					$push: { blog_comments : commentData._id  } 
+				}
+			)
+
+			const populatedPost = await commentData.populate('user_id')
+	
+	
+			response.status(200).json({
+				"successMessage": "Comment created successfully!",
+				"commentContent": populatedPost
+			})
+        }
+        else{
+            response.status(400).json({
+                "postUpdateError": "Post not found!"
+            })
         }
 
-        const postComment = await blogSchema.findByIdAndUpdate({_id: request.params.id},{
-            $push:{comments:comment}
-        },{
-            new:true
-        })
-
-        await postComment.save()
-
-        response.status(200).json({
-            "successMessage": "Comment created successfully!",
-            "commentContent": postComment.comments
-        })
+		
     }
 
     catch(error){
@@ -235,17 +562,78 @@ const createComment = async(request, response) =>{
 // Get all comments
 const getAllComments = async(request, response) =>{
     try{
-        const post = await blogSchema.findOne({_id: request.params.id});
-        const comments = post.comments
-        
-        if (comments){
-            response.status(200).json({"fetchedComments": comments})
-        }
+        let blog_id = request.params.blog_id;
 
+		if(!mongoose.Types.ObjectId.isValid(blog_id)){
+			return response.status(400).json({
+				"invalidId":'Something went wrong, refresh your page and try again!',
+			});
+		}
+
+		const post = await blogSchema.findOne({_id: blog_id});
+
+		if (post){
+
+			let query=[
+				{
+					$lookup:
+					{
+					 from: "users",
+					 localField: "user_id",
+					 foreignField: "_id",
+					 as: "commentCreator"
+					}
+				},
+				{$unwind: '$commentCreator'},
+				{
+					$lookup:
+					{
+					 from: "commentlikes",
+					 localField: "comment_likes",
+					 foreignField: "_id",
+					 as: "commentLikes"
+					}
+				},
+				{
+					$match:{
+						'blog_id':mongoose.Types.ObjectId(blog_id)
+					}
+				},
+				{
+					$sort:{
+						createdAt:-1
+					}
+				}
+			];
+
+			// Only show needed fields
+			query.push(
+				{ 
+					$project : {
+					"_id":1,
+					"createdAt":1,
+					"comment": 1,
+					"commentLikes.user_id": 1,
+					"postCreator._id":1 ,
+					"commentCreator.firstName":1,
+					"commentCreator.lastName":1,
+					"commentCreator.imageLink":1,
+					"comment_likes_count":{$size:{"$ifNull":["$comment_likes",[]]}}
+					} 
+				}
+			);
+
+			let allComments = await blogCommentModel.aggregate(query);
+	
+			response.status(200).json({
+                "allAvailableComments": allComments.map(doc => blogCommentModel.hydrate(doc))
+        })
+
+	}
         else{
             response.status(400).json({
-                "commentFetchedError": "No Comments!"
-            })  
+                "postUpdateError": "Post not found!"
+            })
         }
     }
 
@@ -258,20 +646,136 @@ const getAllComments = async(request, response) =>{
     }
 }
 
-// Get single comment
-const getSingleComment = async(request, response) =>{
+// Update a comment
+const updateComment = async(request, response) =>{
     try{
-        const singleComment = await blogSchema.find({ '_id': request.params.id, 'comments._id': request.params.commentId }, { 'comments.$': 1 });
-        
-        if (singleComment){
-            response.status(200).json({"fetchedComment": singleComment})
-        }
 
+		//Validation
+        const {error} = commentValidationSchema.validate(request.body)
+
+        if (error)
+            return response.status(400).json({"validationError": error.details[0].message})
+
+		let comment_id = request.params.comment_id;
+
+		if(!mongoose.Types.ObjectId.isValid(comment_id)){
+			return response.status(400).json({
+				"invalidId":'Something went wrong, refresh your page and try again!',
+			});
+		}
+
+		const comment = await blogCommentModel.findOne({_id: comment_id});
+
+		if (comment){
+
+				let current_user = request.user;
+
+				if(comment.user_id!= current_user._id){
+					return response.status(400).json({
+						"unauthorizedError":'Access denied, you are not the creator of this comment!',
+					});
+				}else{
+
+					await blogCommentModel.updateOne({_id:comment_id},{
+						comment: request.body.comment || comment.comment
+					});
+
+
+					let query=[
+						{
+							$lookup:
+							{
+							from: "users",
+							localField: "user_id",
+							foreignField: "_id",
+							as: "commentCreator"
+							}
+						},
+						{$unwind: '$commentCreator'},
+						{
+							$match:{
+								'_id':mongoose.Types.ObjectId(comment_id)
+							}
+						},
+
+					];
+
+					let updatedComment = await blogCommentModel.aggregate(query);
+
+				response.status(200).json({
+					"commentUpdateSuccess": "Comment updated successfully!",
+					"updatedComment": updatedComment[0]
+				})
+
+			}
+
+			
+        }
         else{
             response.status(400).json({
-                "commentFetchedError": "comment not found!"
-            })  
+                "commentUpdateError": "Comment not found!"
+            })
         }
+
+		
+    }
+
+    catch(error){
+        console.log(error);
+        response.status(500).json({
+            "status": "fail", 
+            "message": error.message
+        })
+    }
+}
+
+// Delete a comment
+const deleteComment = async(request, response) =>{
+    try{
+
+		//Validation
+
+		let comment_id = request.params.comment_id;
+
+		if(!mongoose.Types.ObjectId.isValid(comment_id)){
+			return response.status(400).json({
+				"invalidId":'Something went wrong, refresh your page and try again!',
+			});
+		}
+
+		const comment = await blogCommentModel.findOne({_id: comment_id});
+
+		if (comment){
+
+				let current_user = request.user;
+
+				if(comment.user_id!= current_user._id){
+					return response.status(400).json({
+						"unauthorizedError":'Access denied, you are not the creator of this comment!',
+					});
+				}else{
+
+					await blogCommentModel.deleteOne({_id:comment_id})
+					await blogSchema.updateOne(
+						{_id:comment.blog_id},
+						{
+							$pull:{blog_comments:comment_id}
+						}
+					)
+
+				response.status(200).json({
+					"commentDeleteSuccess": "Comment deleted successfully!"
+				})
+
+			}
+        }
+        else{
+            response.status(400).json({
+                "commentUpdateError": "Comment not found!"
+            })
+        }
+
+		
     }
 
     catch(error){
@@ -284,14 +788,15 @@ const getSingleComment = async(request, response) =>{
 }
 
 
-// Like post
+// Like a post
 const likePost = async(request, response) =>{
     try{
+
       let blog_id = request.params.blog_id
+
       if(!mongoose.Types.ObjectId.isValid(blog_id)){
         return response.status(400).json({ 
-            "messageInvalidId": "Invalid blog Id",
-            data: {}
+            "invalidId":'Something went wrong, refresh your page and try again!',
         })
       }
 
@@ -300,45 +805,28 @@ const likePost = async(request, response) =>{
       if(!blog){
         return response.status(400).json({ 
             "messageNoBlog": "No blog found!",
-            data: {}
         })
       }
       else{
-        let current_user_id
-        const token = request.header("auth_token")
-      
-       if(!token)
-        return response.status(401).json({
-            "messageLogin": "Please login!"
-        })
 
-        Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodedToken)=>{
-            if(err){
-                console.log(err.message)
-            }
+        let current_user = request.user;
 
-            else{
-                current_user_id = decodedToken.userEmail._id
-            }
-        })
-        
-        const blog_like = await blogLikeModel.findOne({ blog_id: blog_id, user_id: current_user_id})
+        const blog_like = await blogLikeModel.findOne({ blog_id: blog_id, user_id: current_user._id})
 
         if(!blog_like){
             const blogLikeDoc = new blogLikeModel ({
                 blog_id: blog_id,
-                user_id: current_user_id
+                user_id: current_user._id
             })
-            await blogLikeDoc.save();
+            let likeData= await blogLikeDoc.save();
 
             await blogSchema.updateOne({_id: blog_id},
                 {
-                  $push:{blog_likes: current_user_id}
+                  $push:{blog_likes: likeData._id}
                 })
 
                 return response.status(200).json({ 
                     "messageLikeAdded": "Like successfully added!",
-                    data: {}
                 })
         }
 
@@ -349,12 +837,11 @@ const likePost = async(request, response) =>{
 
             await blogSchema.updateOne({_id: blog_like.blog_id},
                 {
-                  $pull:{blog_likes: current_user_id}
+                  $pull:{blog_likes: blog_like._id}
                 })
 
                 return response.status(200).json({ 
                     "messageLikeRemoved": "Like successfully removed!",
-                    data: {}
                 })
         }
       }
@@ -370,100 +857,64 @@ const likePost = async(request, response) =>{
     }
 }
 
-// Get all Likes
-const getAllLikes = async(request, response) =>{
-    try{
-        const post = await blogSchema.findOne({_id: request.params.id});
-        const likes = post.blog_likes
-        
-        if (likes){
-            response.status(200).json({"fetchedLikes": likes})
-        }
-
-        else{
-            response.status(400).json({
-                "likeFetchedError": "No Likes!"
-            })  
-        }
-    }
-
-    catch(error){
-        console.log(error);
-        response.status(500).json({
-            "status": "fail", 
-            "message": error.message
-        })
-    }
-}
 
 // Like a comment
 const likeComment = async(request, response) =>{
     try{
-      
-        let current_user_id
-        const token = request.header("auth_token")
-      
-       if(!token)
-        return response.status(401).json({
-            "messageLogin": "Please login!"
+
+      let comment_id = request.params.comment_id
+
+      if(!mongoose.Types.ObjectId.isValid(comment_id)){
+        return response.status(400).json({ 
+            "invalidId":'Something went wrong, refresh your page and try again!',
         })
+      }
 
-        Jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, async (err, decodedToken)=>{
-            if(err){
-                console.log(err.message)
-            }
+      const comment = await blogCommentModel.findOne({_id: comment_id});
 
-            else{
-                current_user_id = decodedToken.userEmail._id
-            }
+      if(!comment){
+        return response.status(400).json({ 
+            "messageNoBlog": "No blog found!",
         })
-        
-        
-        const comment_like = await commentLikeModel.findOne({ comment_id: request.body.comment_id, user_id: current_user_id })
+      }
+      else{
 
+        let current_user = request.user;
+
+        const comment_like = await commentLikeModel.findOne({ comment_id: comment_id, user_id: current_user._id})
 
         if(!comment_like){
             const commentLikeDoc = new commentLikeModel ({
-                user_id: current_user_id,
-                comment_id: request.body.comment_id
+                comment_id: comment_id,
+                user_id: current_user._id
             })
-            await commentLikeDoc.save();
+            let likeData= await commentLikeDoc.save();
 
-            
+            await blogCommentModel.updateOne({_id: comment_id},
+                {
+                  $push:{comment_likes: likeData._id}
+                })
 
-            await blogSchema.findByIdAndUpdate({_id: request.params.id},{
-                $push: {"comments.$[element].comment_likes": current_user_id } 
-            },
-            {
-                arrayFilters: [{ "element._id": {_id: request.params.commentId} }],
-                new:true
-            })
-    
-
-            return response.status(200).json({ 
-                "messageLikeAdded": "Like successfully added!",
-                data: {}
-            })
+                return response.status(200).json({ 
+                    "messageLikeAdded": "Like successfully added!",
+                })
         }
 
         else{
             await commentLikeModel.deleteOne({
-                _id: comment_like._id
+                _id:comment_like._id
             })
 
-            await blogSchema.findByIdAndUpdate({_id: request.params.id},{
-                $pull: {"comments.$[element].comment_likes": current_user_id } 
-            },
-            {
-                arrayFilters: [{ "element._id": {_id: request.params.commentId} }],
-                new:true
-            })
+            await blogCommentModel.updateOne({_id: comment_like.comment_id},
+                {
+                  $pull:{comment_likes: comment_like._id}
+                })
 
-            return response.status(200).json({ 
-                "messageLikeRemoved": "Like successfully removed!",
-                data: {}
-            })
+                return response.status(200).json({ 
+                    "messageLikeRemoved": "Like successfully removed!",
+                })
         }
+      }
  
     }
 
@@ -477,42 +928,58 @@ const likeComment = async(request, response) =>{
 }
 
 
-// Reply on comments
+// Comment reply
 const commentReply = async(request, response) =>{
     try{
-      const token = request.header("auth_token")
-      
-      if(!token)
-        return response.status(401).json({
-            "replyError": "Please login to reply on this comment!"
-        })
 
-        const {error} = blogValidationSchema.validate(request.body)
+		//Validation
+        const {error} = commentReplyValidationSchema.validate(request.body)
 
         if (error)
             return response.status(400).json({"validationError": error.details[0].message})
 
-        const commentReply = {
-            replyBody : request.body.replyBody,
-            replierName : request.body.replierName,
-            replierImage : request.body.replierImage,
-            dateReplied : request.body.dateReplied
+		let comment_id = request.params.comment_id;
+
+		if(!mongoose.Types.ObjectId.isValid(comment_id)){
+			return response.status(400).json({
+				"invalidId":'Something went wrong, refresh your page and try again!',
+			});
+		}
+
+		const comment = await blogCommentModel.findOne({_id: comment_id});
+
+		if (comment){
+
+			const newReply = new commentReplyModel({
+				reply : request.body.reply,
+				comment_id : comment_id,
+				user_id : request.user._id,
+			});
+	
+			const commentData = await newReply.save()
+
+			await blogCommentModel.updateOne(
+				{_id : comment_id},
+				{
+					$push: { comment_replies : commentData._id  } 
+				}
+			)
+
+			const populatedPost = await commentData.populate('user_id')
+	
+	
+			response.status(200).json({
+				"successMessage": "Reply added successfully!",
+				"replyContent": populatedPost
+			})
+        }
+        else{
+            response.status(400).json({
+                "postUpdateError": "Post not found!"
+            })
         }
 
-        const commentReplies = await blogSchema.findByIdAndUpdate({_id: request.params.id},{
-            $push: {"comments.$[element].commentReplies": commentReply } 
-        },
-        {
-            arrayFilters: [{ "element._id": {_id: request.params.commentId} }],
-            new:true
-        })
-
-        await commentReplies.save()
-
-        response.status(200).json({
-            "successMessage": "reply added successfully!",
-            "replyContent": commentReplies.commentReplies
-        })
+		
     }
 
     catch(error){
@@ -524,26 +991,74 @@ const commentReply = async(request, response) =>{
     }
 }
 
+// Get all comment replies
 const getAllCommentReplies = async(request, response) =>{
     try{
-        var pipeline = [
-            {
-              $lookup: {
-                from: "commentReplies",
-                localField: "comments.commentReplies",
-                foreignField: "_id",
-                as: "comments.commentReplies" 
-              }
-            }
-          ];
-          
-          blogModel.aggregate(pipeline, function(err, results) {
-            if (err) throw err;
-            response.status(200).json({"fetchedReplies": results})
-          });
-        
-         
-        
+        let comment_id = request.params.comment_id;
+
+		if(!mongoose.Types.ObjectId.isValid(comment_id)){
+			return response.status(400).json({
+				"invalidId":'Something went wrong, refresh your page and try again!',
+			});
+		}
+
+		const comment = await blogCommentModel.findOne({_id: comment_id});
+
+		if (comment){
+
+			let query=[
+				{
+					$lookup:
+					{
+					 from: "users",
+					 localField: "user_id",
+					 foreignField: "_id",
+					 as: "replyCreator"
+					}
+				},
+				{$unwind: '$replyCreator'},
+				{
+					$match:{
+						'comment_id':mongoose.Types.ObjectId(comment_id)
+					}
+				},
+				{
+					$sort:{
+						createdAt:-1
+					}
+				}
+			];
+
+			// Only show needed fields
+			query.push(
+				{ 
+					$project : {
+					"_id":1,
+					"createdAt":1,
+					"reply": 1,
+					"comment_replies": 1,
+					"comment_likes": 1,
+					"postCreator._id":1 ,
+					"replyCreator.firstName":1,
+					"replyCreator.lastName":1,
+					"replyCreator.imageLink":1,
+					} 
+				}
+			);
+
+
+			let allReplies = await commentReplyModel.aggregate(query);
+	
+			response.status(200).json({
+                "allAvailableReplies": allReplies.map(doc => commentReplyModel.hydrate(doc)),
+        })
+
+	}
+        else{
+            response.status(400).json({
+                "repliesFoundError": "Replies not found!"
+            })
+        }
     }
 
     catch(error){
@@ -555,6 +1070,6 @@ const getAllCommentReplies = async(request, response) =>{
     }
 }
 
-export default {createPost, getPosts, getSinglePost, updatePost, deletePost, 
-    createComment, getAllComments, likePost, getAllLikes, likeComment,
-    commentReply, getSingleComment, getAllCommentReplies};
+export default {createPost, addCategory, getAllCategories, deleteCategory, getPosts, getSinglePost, updatePost, deletePost, 
+    createComment, getAllComments, likePost, likeComment,
+    commentReply, updateComment, deleteComment, getAllCommentReplies};

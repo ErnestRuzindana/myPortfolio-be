@@ -15,13 +15,7 @@ const blogSchema = new Schema({
     },
 
     postImage: {
-        type: String,
-        required: true
-    },
-
-    headerImage: {
-        type: String,
-        required: true
+        type: String
     },
 
     slug: {
@@ -32,9 +26,11 @@ const blogSchema = new Schema({
 
     createdBy: {type: Schema.Types.ObjectId, ref: "User" },
 
-    // blog_comments:[{type: mongoose.Schema.Types.ObjectId, ref: 'BlogComment' }],
+    category: {type: Schema.Types.ObjectId, ref: "Category" },
 
-    // blog_likes:[{type: mongoose.Schema.Types.ObjectId, ref: 'BlogLike' }]
+    blog_comments:[{type: mongoose.Schema.Types.ObjectId, ref: 'BlogComment' }],
+
+    blog_likes:[{type: mongoose.Schema.Types.ObjectId, ref: 'BlogLike' }]
   
 
 }, {
