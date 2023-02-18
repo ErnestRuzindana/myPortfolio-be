@@ -261,6 +261,7 @@ const getSinglePost = async(request, response) =>{
 	    		"postCreator.lastName":1,
 	    		"postCreator.imageLink":1,
                 "categoryDetails.name":1,
+				"categoryDetails.slug":1,
 				"comments_count":{$size:{"$ifNull":["$blog_comments",[]]}},
 				"likes_count":{$size:{"$ifNull":["$blog_likes",[]]}}
 	    		} 
