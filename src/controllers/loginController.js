@@ -329,7 +329,7 @@ const updateUser = async(request, response) =>{
                     }
 
                     response.status(200).json({
-                        "message": "Profile updated successfully!",
+                        "successMessage": "Profile updated successfully!",
                         "ourUpdatedUser": ourLoggedInUser
                     })
                 }

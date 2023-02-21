@@ -9,6 +9,7 @@ import categoryModel from "../models/categoryModel.js";
 import blogValidationSchema from "../validations/blogValidation.js";
 import commentValidationSchema from "../validations/commentValidation.js";
 import commentReplyValidationSchema from "../validations/commentReplyValidation.js";
+import categoryValidationSchema from "../validations/categoryValidation.js";
 import cloudinary from "../helpers/cloudinary.js";
 
 // Creating the post
@@ -20,6 +21,7 @@ const createPost = async(request, response) =>{
 
         if (error)
             return response.status(400).json({"validationError": error.details[0].message})
+
 
         const postImageResult = await cloudinary.uploader.upload(request.body.postImage, {
             folder: "Ernest's Post Images"
@@ -432,12 +434,15 @@ const deletePost = async(request, response) =>{
 const addCategory = async(request, response) =>{
 
     try{
-        //Validation
-        const {error} = blogValidationSchema.validate(request.body)
+		//Validation
+        const {error} = categoryValidationSchema.validate(request.body)
+
+        if (error)
+            return response.status(400).json({"validationError": error.details[0].message})
 
         const newCategory = new categoryModel({
-            slug : request.body.slug,
-            name : request.body.name,
+			name : request.body.name,
+            slug : slugify(request.body.name, { lower: true, strict: true })
         });
 
         const blogCategory = await newCategory.save()
@@ -450,10 +455,17 @@ const addCategory = async(request, response) =>{
 
     catch(error){
         console.log(error);
+		if (error.code === 11000 || error.code === 11001) {
+            response.status(400).json({
+				"duplicationError": "You already have a category with this name!"
+			})
+		} else{
 			response.status(500).json({
 				"status": "fail", 
 				"message": error.message
 			})
+		}
+        
     }
 }
 
@@ -480,7 +492,7 @@ const getAllCategories = async(request, response) =>{
 const deleteCategory = async(request, response) =>{
     try{
 
-        await categoryModel.deleteOne({_id: request.query.categoryId});
+        await categoryModel.deleteOne({_id: request.params.categoryId});
 
         response.status(200).json({
             "successMessage": "Category deleted successfully!"

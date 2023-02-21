@@ -3,14 +3,16 @@ import mongoose from "mongoose";
 const Schema = mongoose.Schema
 
 const categorySchema = new Schema ({
-
-    slug: {
-        type: String
-    },
     
     name: {
         type: String
-    }
+    },
+
+    slug: {
+        type: String,
+        required: true,
+        unique: true
+    },
     
 })
 

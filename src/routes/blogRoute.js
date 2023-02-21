@@ -19,6 +19,6 @@ router.post("/commentReply/:comment_id", authentication.authLogin, blogControlle
 router.get("/getAllCommentReplies/:comment_id", blogController.getAllCommentReplies);
 router.post("/addCategory", blogController.addCategory);
 router.get("/getAllCategories", blogController.getAllCategories);
-router.delete("/deleteCategory", blogController.deleteCategory);
+router.delete("/deleteCategory/:categoryId", blogController.deleteCategory);
 
 export default router
