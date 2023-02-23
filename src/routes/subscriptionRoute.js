@@ -14,5 +14,7 @@ router.get("/verifyEmail", subscriptionController.verifyEmail)
 
 router.get("/getSubscriberById/:id", subscriptionController.getSubscriberById);
 
+router.post("/emailSubscribers", subscriptionController.emailSubscribers)
+
 export default router;
 

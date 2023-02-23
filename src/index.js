@@ -18,6 +18,8 @@ import MemoryStore from "memorystore";
 import cookieParser from "cookie-parser";
 import socialMediaLoggedInUser from "./routes/socialMediaRoute.js";
 import blogRoute from "./routes/blogRoute.js";
+import projectsRoute from "./routes/projectsRoute.js";
+import aboutRoute from "./routes/aboutRoute.js";
 import subscriptionRoute from "./routes/subscriptionRoute.js";
 
 const port = process.env.PORT || 5000;
@@ -62,6 +64,8 @@ app.use("/", cors(corsOptions), facebookRoute);
 app.use("/", cors(corsOptions), githubRoute);
 app.use("/", cors(corsOptions), socialMediaLoggedInUser);
 app.use("/", cors(corsOptions), blogRoute);
+app.use("/", cors(corsOptions), projectsRoute);
+app.use("/", cors(corsOptions), aboutRoute);
 app.use("/", cors(corsOptions), subscriptionRoute);
 
 
