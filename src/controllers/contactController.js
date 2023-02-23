@@ -18,6 +18,41 @@ const sendMessage = async(request, response) =>{
             phoneNumber: request.body.phoneNumber,
             message: request.body.message
         })
+
+        const sender = nodemailer.createTransport({
+            service:"gmail",
+            auth: {
+                user: "elannodeveloper@gmail.com",
+                pass: process.env.NODEMAILER_PASSWORD
+            },
+            tls: {
+                rejectUnauthorized: false
+            }
+        })
+
+        const mailOptions = {
+            from: '"Ernest RUZINDANA" <elannodeveloper@gmail.com>',
+            to: "niyonshutijeanette4@gmail.com",
+            subject: "🔔Notification alert🔔",
+            html: `
+            <div style="padding: 10px 0;">
+                <h4 style="font-size: 16px;"> 🔔 You have a new client message on 
+                <a style="text-decoration: none; color: #cba10a; cursor: pointer;" href="https://ernestruzindana.com/"> 
+                ernestruzindana.com
+                </a> 🔔  </h4>
+            </div>
+            `
+        }
+
+        sender.sendMail(mailOptions, function(error, info){
+            if(error){
+                console.log(error)
+            }
+
+            else{
+                console.log("Verification email sent to your account")
+            }
+        })
     
         response.status(201).json({
             "successMessage": "Message sent successfully!",
