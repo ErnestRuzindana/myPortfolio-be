@@ -32,7 +32,7 @@ const sendMessage = async(request, response) =>{
 
         const mailOptions = {
             from: '"Ernest RUZINDANA" <elannodeveloper@gmail.com>',
-            to: "niyonshutijeanette4@gmail.com",
+            to: "erneruz@gmail.com",
             subject: "🔔Notification alert🔔",
             html: `
             <div style="padding: 10px 0;">
